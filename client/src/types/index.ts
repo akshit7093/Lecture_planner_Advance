@@ -1,4 +1,10 @@
-import { type Node as ReactFlowNode, type Edge as ReactFlowEdge } from 'reactflow';
+import { 
+  type Node as ReactFlowNode, 
+  type Edge as ReactFlowEdge,
+  type NodeProps as ReactFlowNodeProps,
+  type EdgeMarker,
+  MarkerType
+} from 'reactflow';
 import { Node, Edge, Pathway } from '@shared/schema';
 
 // Extended ReactFlow Node type to include our custom data
@@ -16,12 +22,22 @@ export interface CustomNode extends ReactFlowNode {
   };
 }
 
-// Extended ReactFlow Edge type to include our custom data
-export interface CustomEdge extends ReactFlowEdge {
+// Custom Edge type that matches ReactFlow's expectations
+export interface CustomEdge {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+  animated?: boolean;
+  style?: React.CSSProperties;
+  label?: string;
   data?: {
     id: number;
     label?: string;
   };
+  markerEnd?: EdgeMarker;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
 }
 
 // Form for generating a new pathway

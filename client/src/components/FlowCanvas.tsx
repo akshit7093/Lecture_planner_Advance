@@ -12,6 +12,8 @@ import ReactFlow, {
   ReactFlowInstance,
   MarkerType,
   Panel,
+  ConnectionMode,
+  EdgeMarker,
 } from 'reactflow';
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Link2, Trash2 } from 'lucide-react';
@@ -56,7 +58,9 @@ const FlowCanvas = ({
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
   // State for connection mode
-  const [connectionMode, setConnectionMode] = useState(false);
+  // Define our own type to avoid ReactFlow's type issues
+  type FlowConnectionMode = 'strict' | 'loose';
+  const [connectionMode, setConnectionMode] = useState<FlowConnectionMode>('strict');
   
   // Keep track of ReactFlow instance
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
@@ -120,7 +124,7 @@ const FlowCanvas = ({
   }, []);
   
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    setEdges((eds) => applyEdgeChanges(changes, eds));
+    setEdges((eds) => applyEdgeChanges(changes, eds) as unknown as CustomEdge[]);
   }, []);
   
   // Handle new connections
@@ -136,9 +140,9 @@ const FlowCanvas = ({
         width: 20,
         height: 20,
         color: '#718096',
-      },
+      } as any,
     };
-    setEdges((eds) => addEdge(newEdge, eds));
+    setEdges((eds) => addEdge(newEdge, eds) as unknown as CustomEdge[]);
   }, []);
   
   // Handle adding a new node
@@ -150,7 +154,7 @@ const FlowCanvas = ({
   
   // Toggle connection mode
   const toggleConnectionMode = useCallback(() => {
-    setConnectionMode(prev => !prev);
+    setConnectionMode(prev => prev === 'strict' ? 'loose' : 'strict');
   }, []);
   
   // Delete selected node
@@ -177,7 +181,7 @@ const FlowCanvas = ({
         nodeTypes={nodeTypes}
         onInit={setReactFlowInstance}
         className="bg-background"
-        connectionMode={connectionMode ? 'loose' : 'strict'}
+        connectionMode={connectionMode as any}
         defaultEdgeOptions={{
           type: 'smoothstep',
           style: { stroke: '#718096' },
@@ -186,7 +190,7 @@ const FlowCanvas = ({
             width: 20,
             height: 20,
             color: '#718096',
-          },
+          } as any,
         }}
         proOptions={{ hideAttribution: true }}
         nodesDraggable={true}
@@ -217,7 +221,7 @@ const FlowCanvas = ({
             onClick={toggleConnectionMode}
           >
             <Link2 className="h-4 w-4 mr-1" /> 
-            {connectionMode ? "Exit Connect Mode" : "Connect Nodes"}
+            {connectionMode === 'loose' ? "Exit Connect Mode" : "Connect Nodes"}
           </Button>
           <Button 
             variant="outline" 

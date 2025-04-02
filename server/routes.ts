@@ -7,7 +7,9 @@ import {
   insertPathwaySchema, 
   insertNodeSchema, 
   insertEdgeSchema,
-  openRouterRequestSchema
+  openRouterRequestSchema,
+  type InsertNode,
+  type Node as DbNode
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -277,24 +279,49 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
 
       // Extract the generated content
       const aiResponse = response.data;
+      console.log("API Response:", JSON.stringify(aiResponse, null, 2));
       
       // Parse the JSON content from the AI response
       let jsonContent;
       try {
-        const content = aiResponse.choices[0].message.content;
-        // Extract JSON object if it's wrapped in backticks or other formatting
-        const jsonMatch = content.match(/```(?:json)?([\s\S]*?)```/) || content.match(/({[\s\S]*})/);
+        // Make sure we're accessing the response structure correctly
+        if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
+          console.error("Unexpected API response structure:", aiResponse);
+          return res.status(500).json({ 
+            message: "Unexpected API response structure",
+            aiResponse: aiResponse
+          });
+        }
         
-        if (jsonMatch) {
+        const content = aiResponse.choices[0].message.content;
+        console.log("Content from API:", content);
+        
+        // Extract JSON object if it's wrapped in backticks or other formatting
+        const jsonMatch = content.match(/```(?:json)?([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
+        
+        if (jsonMatch && jsonMatch[1]) {
           jsonContent = JSON.parse(jsonMatch[1].trim());
         } else {
           // Try to parse the whole response as JSON
           jsonContent = JSON.parse(content);
         }
-      } catch (error) {
+        
+        // Validate essential fields are present
+        if (!jsonContent.title || !jsonContent.nodes || !Array.isArray(jsonContent.nodes) || !jsonContent.edges || !Array.isArray(jsonContent.edges)) {
+          console.error("Invalid JSON content structure:", jsonContent);
+          return res.status(500).json({ 
+            message: "Generated content is missing required fields",
+            content: content
+          });
+        }
+      } catch (error: any) {
+        console.error("Failed to parse API response:", error);
         return res.status(500).json({ 
           message: "Failed to parse AI response",
-          aiResponse: aiResponse.choices[0].message.content 
+          error: error.message,
+          content: aiResponse.choices && aiResponse.choices[0] && aiResponse.choices[0].message 
+            ? aiResponse.choices[0].message.content 
+            : "No content available"
         });
       }
 
@@ -380,6 +407,9 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
       if (!node) {
         return res.status(404).json({ message: "Node not found" });
       }
+      
+      // TypeScript safety check
+      const dbNode = node as DbNode;
 
       // Prepare the prompt based on enhancement type
       let prompt;
@@ -417,7 +447,20 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
       });
 
       // Extract the content from the AI response
-      const content = response.data.choices[0].message.content;
+      const aiResponse = response.data;
+      console.log("Node Enhancement API Response:", JSON.stringify(aiResponse, null, 2));
+      
+      // Validate the response structure
+      if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
+        console.error("Unexpected API response structure for node enhancement:", aiResponse);
+        return res.status(500).json({ 
+          message: "Unexpected API response structure",
+          aiResponse: aiResponse
+        });
+      }
+      
+      const content = aiResponse.choices[0].message.content;
+      console.log("Node Enhancement Content:", content);
       
       // Process the response based on enhancement type
       let enhancementContent;
@@ -431,8 +474,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
           } else {
             // Fallback: parse as text and create structured data
             const resources = content.split('\n')
-              .filter(line => line.trim().length > 0 && (line.includes('http') || line.includes('www')))
-              .map(line => {
+              .filter((line: string) => line.trim().length > 0 && (line.includes('http') || line.includes('www')))
+              .map((line: string) => {
                 const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
                 const url = urlMatch ? urlMatch[1] : '';
                 const title = line.replace(url, '').replace(/[:-]\s*/, '').trim();
@@ -440,31 +483,38 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
               });
             enhancementContent = resources;
           }
-        } catch (error) {
+        } catch (error: any) {
+          console.error("Error parsing resources:", error);
           enhancementContent = [{ title: "Generated Resource", url: "https://example.com" }];
         }
       } else {
         // For other types, split by newlines and filter empty lines
         enhancementContent = content.split('\n')
-          .filter(line => line.trim().length > 0)
-          .map(line => line.replace(/^\d+\.\s*/, '').trim()); // Remove numbering
+          .filter((line: string) => line.trim().length > 0)
+          .map((line: string) => line.replace(/^\d+\.\s*/, '').trim()); // Remove numbering
       }
 
-      // Update the node with the new content
-      const updatedNode = { ...node };
+      // Create the appropriate update object based on enhancement type
+      let result: DbNode | undefined;
       
       if (enhanceType === 'questions') {
-        updatedNode.questions = [...(node.questions || []), ...enhancementContent];
+        // We need to create a properly typed object for each case
+        result = await storage.updateNode(dbNode.id, {
+          questions: [...(dbNode.questions || []), ...enhancementContent]
+        });
       } else if (enhanceType === 'resources') {
-        updatedNode.resources = [...(node.resources || []), ...enhancementContent];
+        result = await storage.updateNode(dbNode.id, {
+          resources: [...(dbNode.resources || []), ...enhancementContent]
+        });
       } else if (enhanceType === 'equations') {
-        updatedNode.equations = [...(node.equations || []), ...enhancementContent];
+        result = await storage.updateNode(dbNode.id, {
+          equations: [...(dbNode.equations || []), ...enhancementContent]
+        });
       } else if (enhanceType === 'codeExamples') {
-        updatedNode.codeExamples = [...(node.codeExamples || []), ...enhancementContent];
+        result = await storage.updateNode(dbNode.id, {
+          codeExamples: [...(dbNode.codeExamples || []), ...enhancementContent]
+        });
       }
-
-      // Save the updated node
-      const result = await storage.updateNode(node.id, updatedNode);
       
       res.json({
         success: true,
@@ -472,7 +522,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         enhancedContent: enhancementContent
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Enhancement error:", error);
       
       if (axios.isAxiosError(error)) {
@@ -482,7 +532,10 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         });
       }
       
-      res.status(500).json({ message: "Failed to enhance node" });
+      res.status(500).json({ 
+        message: "Failed to enhance node",
+        error: error.message || "Unknown error" 
+      });
     }
   });
 
