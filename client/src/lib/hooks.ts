@@ -89,11 +89,24 @@ export const usePathwayData = (pathwayId: number | null) => {
   const {
     data: nodesAndEdges,
     isLoading: isLoadingElements,
+    error,
   } = useQuery({
     queryKey: ['/api/pathways', pathwayId, 'elements'],
     queryFn: () => pathwayId ? fetchNodesAndEdges(pathwayId) : null,
     enabled: !!pathwayId,
+    retry: 3,
+    retryDelay: 1000,
   });
+  
+  // Log error and query result for debugging
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching nodes and edges:", error);
+    }
+    if (nodesAndEdges) {
+      console.log("Fetched nodes and edges:", nodesAndEdges);
+    }
+  }, [error, nodesAndEdges]);
   
   // Node enhancement mutation
   const queryClient = useQueryClient();
@@ -155,7 +168,7 @@ export const useClickOutside = (callback: () => void) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+      if (ref.current && !ref.current.contains(event.target as HTMLElement)) {
         callback();
       }
     };

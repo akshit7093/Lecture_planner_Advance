@@ -74,9 +74,16 @@ const FlowCanvas = ({
   
   // Update nodes when db data changes
   useEffect(() => {
-    if (dbNodes.length > 0 && dbEdges.length > 0) {
+    console.log("FlowCanvas received nodes:", dbNodes.length, "edges:", dbEdges.length);
+    
+    // Process even if we only have nodes but no edges
+    if (dbNodes.length > 0) {
       const elements = convertToReactFlowElements(dbNodes, dbEdges);
+      console.log("Converted elements:", elements);
+      
       const layoutedNodes = layoutNodes(elements.nodes, elements.edges);
+      console.log("Layouted nodes:", layoutedNodes);
+      
       setNodes(layoutedNodes);
       setEdges(elements.edges);
     }

@@ -37,6 +37,9 @@ const NodeComponent = ({
 }: NodeComponentProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  // Debug log to see node data
+  console.log("Node rendering with data:", data);
+  
   // Function to safely render math equations
   const renderEquation = (equation: string) => {
     try {
