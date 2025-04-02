@@ -358,8 +358,91 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
                   .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure property names have double quotes
                   .replace(/\'/g, '"');                      // Replace single quotes with double quotes
                 
-                jsonContent = JSON.parse(fixedText);
-                console.log("Successfully parsed fixed JSON");
+                try {
+                  jsonContent = JSON.parse(fixedText);
+                  console.log("Successfully parsed fixed JSON");
+                } catch (parseAttemptError) {
+                  console.log("First fix attempt failed, trying advanced repair...");
+                  
+                  // This is likely a truncated JSON - let's try to complete it
+                  const objectStart = fixedText.indexOf('{');
+                  
+                  if (objectStart >= 0) {
+                    console.log("Attempting to complete truncated JSON...");
+                    
+                    // Is this a truncated node entry?
+                    if (fixedText.includes('"nodes":')) {
+                      // Check if we have a truncated node
+                      const lastNodeStart = fixedText.lastIndexOf('"id":');
+                      const lastBracePos = fixedText.lastIndexOf('}');
+                      const lastCommaPos = fixedText.lastIndexOf(',');
+                      
+                      // If the last node was started but not completed
+                      if (lastNodeStart > lastBracePos) {
+                        console.log("Found truncated node at position:", lastNodeStart);
+                        
+                        // Complete the node and the overall structure
+                        fixedText = fixedText.substring(0, lastCommaPos) + 
+                                   '}], "edges": [] }';
+                        
+                        console.log("Completed truncated JSON structure");
+                      } else if (fixedText.lastIndexOf('"nodes": [') > fixedText.lastIndexOf(']')) {
+                        // We have nodes tag but no closing bracket
+                        fixedText = fixedText + '],"edges":[]}';
+                        console.log("Completed nodes array and JSON structure");
+                      } else if (!fixedText.includes('"edges":')) {
+                        // If we have completed nodes but no edges
+                        if (fixedText.endsWith('}')) {
+                          // Add edges before the last }
+                          fixedText = fixedText.substring(0, fixedText.length - 1) + 
+                                     ', "edges": [] }';
+                        } else if (fixedText.endsWith(']')) {
+                          // Add edges after the nodes array
+                          fixedText = fixedText + ', "edges": [] }';
+                        } else {
+                          // Just append edges and close
+                          fixedText = fixedText + ', "edges": [] }';
+                        }
+                        console.log("Added missing edges array");
+                      }
+                    } else if (fixedText.includes('"title":') && !fixedText.includes('"nodes":')) {
+                      // We have title but no nodes section
+                      if (fixedText.endsWith('"description": "')) {
+                        // Truncated at description, complete it
+                        fixedText = fixedText + 'Auto-completed description", "nodes": [], "edges": [] }';
+                        console.log("Completed truncated description and added missing arrays");
+                      } else {
+                        // Append nodes and edges
+                        if (fixedText.endsWith('}')) {
+                          fixedText = fixedText.substring(0, fixedText.length - 1) + 
+                                     ', "nodes": [], "edges": [] }';
+                        } else {
+                          fixedText = fixedText + ', "nodes": [], "edges": [] }';
+                        }
+                        console.log("Added missing nodes and edges arrays");
+                      }
+                    }
+                    
+                    // Try to parse the repaired JSON
+                    try {
+                      jsonContent = JSON.parse(fixedText);
+                      console.log("Successfully parsed completed JSON structure");
+                    } catch (finalError) {
+                      console.error("Final JSON completion attempt failed:", (finalError as Error).message);
+                      
+                      // Last resort: Create minimal valid structure for the response
+                      console.log("Using minimal fallback JSON structure");
+                      jsonContent = {
+                        title: "Learning Pathway",
+                        description: "Automatically created pathway due to parsing issues",
+                        nodes: [],
+                        edges: []
+                      };
+                    }
+                  } else {
+                    throw new Error("Cannot find starting bracket of JSON object");
+                  }
+                }
               } catch (error) {
                 const fixError = error as Error;
                 console.error("JSON fixing attempt failed:", fixError.message);
