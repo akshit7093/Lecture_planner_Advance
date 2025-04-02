@@ -35,10 +35,26 @@ export const usePathways = () => {
         description: "Learning pathway generated successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      // Check for specific OpenRouter API errors
+      const errorMessage = error.message || "";
+      const errorDetails = error.details || {};
+      
+      let description = "Failed to generate pathway";
+      
+      if (errorMessage.includes("OpenRouter API") || errorDetails?.statusCode === 500) {
+        description = "The AI service is currently experiencing high demand. Please try again in a few minutes.";
+      } else if (errorMessage.includes("timeout")) {
+        description = "The request timed out. The pathway may be too complex - try a simpler topic or retry later.";
+      } else if (errorMessage.includes("Unexpected API response")) {
+        description = "Received an unexpected response from the AI service. Please try again.";
+      } else {
+        description = `${description}: ${errorMessage}`;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to generate pathway: ${error.message}`,
+        description,
         variant: "destructive",
       });
     }
@@ -120,10 +136,26 @@ export const usePathwayData = (pathwayId: number | null) => {
         description: "Node enhanced successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      // Check for specific API errors
+      const errorMessage = error.message || "";
+      const errorDetails = error.details || {};
+      
+      let description = "Failed to enhance node";
+      
+      if (errorMessage.includes("OpenRouter API") || errorDetails?.statusCode === 500) {
+        description = "The AI service is currently experiencing high demand. Please try again in a few minutes.";
+      } else if (errorMessage.includes("timeout")) {
+        description = "The request timed out. Please try again later.";
+      } else if (errorMessage.includes("Unexpected API response")) {
+        description = "Received an unexpected response from the AI service. Please try again.";
+      } else {
+        description = `${description}: ${errorMessage}`;
+      }
+      
       toast({
         title: "Error",
-        description: `Failed to enhance node: ${error.message}`,
+        description,
         variant: "destructive",
       });
     }

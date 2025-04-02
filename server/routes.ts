@@ -288,30 +288,58 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
       // Call the OpenRouter API with only google/gemini-2.5-pro-exp-03-25:free model as requested
       console.log(`Attempting to use model: google/gemini-2.5-pro-exp-03-25:free`);
       const start = Date.now();
-      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-        model: "google/gemini-2.5-pro-exp-03-25:free",
-        messages: [
-          { 
-            role: "user", 
-            content: prompt 
-          }
-        ],
-        // No token limit as requested
-        // max_tokens: 6000
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
-        }
-      });
+      let response;
       
-      const duration = Date.now() - start;
-      console.log(`Successfully used model: google/gemini-2.5-pro-exp-03-25:free`, {
-        model: "google/gemini-2.5-pro-exp-03-25:free", 
-        statusCode: response.status,
-        responseSize: JSON.stringify(response.data).length,
-        duration: `${duration}ms`,
-      });
+      try {
+        response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+          model: "google/gemini-2.5-pro-exp-03-25:free",
+          messages: [
+            { 
+              role: "user", 
+              content: prompt 
+            }
+          ],
+          // No token limit as requested
+          // max_tokens: 6000
+          // Add some additional parameters to avoid errors
+          temperature: 0.7,
+          seed: Date.now(),
+          stream: false
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer': 'https://replit.com/',
+            'X-Title': 'Learning Pathway Generator'
+          },
+          timeout: 120000 // 2 minute timeout
+        });
+        
+        const duration = Date.now() - start;
+        console.log(`Successfully used model: google/gemini-2.5-pro-exp-03-25:free`, {
+          model: "google/gemini-2.5-pro-exp-03-25:free", 
+          statusCode: response.status,
+          responseSize: JSON.stringify(response.data).length,
+          duration: `${duration}ms`,
+        });
+      } catch (err) {
+        const error = err as any;
+        console.error("Error calling OpenRouter API:", error.response?.data || error.message);
+        
+        // Provide a better error message with API details
+        if (error.response?.data) {
+          return res.status(500).json({ 
+            message: "Error from OpenRouter API", 
+            details: error.response.data,
+            statusCode: error.response.status
+          });
+        } else {
+          return res.status(500).json({ 
+            message: "Failed to call OpenRouter API", 
+            error: error.message || "Unknown error occurred"
+          });
+        }
+      }
 
       // Extract the generated content
       const aiResponse = response.data;
@@ -560,7 +588,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
             content: content
           });
         }
-      } catch (error: any) {
+      } catch (err) {
+        const error = err as Error;
         console.error("Failed to parse API response:", error);
         return res.status(500).json({ 
           message: "Failed to parse AI response",
@@ -697,11 +726,17 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         ],
         // No token limit as requested
         // max_tokens: 2000
+        temperature: 0.7,
+        seed: Date.now(),
+        stream: false
       }, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
-        }
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'HTTP-Referer': 'https://replit.com/',
+          'X-Title': 'Learning Pathway Generator - Node Enhancement'
+        },
+        timeout: 60000 // 1 minute timeout
       });
       
       const duration = Date.now() - start;
@@ -807,7 +842,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
               }
             }
           }
-        } catch (error: any) {
+        } catch (err) {
+          const error = err as Error;
           console.error("Error parsing resources:", error);
           enhancementContent = [];
         }
@@ -888,7 +924,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         enhancedContent: enhancementContent
       });
       
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as any;
       console.error("Enhancement error:", error);
       
       if (axios.isAxiosError(error)) {
