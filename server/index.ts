@@ -60,11 +60,27 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  try {
+    // For local development use 'localhost' instead of '0.0.0.0'
+    // This avoids the ENOTSUP error on some Windows systems
+    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    
+    // Remove reusePort option for better cross-platform compatibility
+    server.listen({
+      port,
+      host
+    }, () => {
+      log(`serving on ${host}:${port}`);
+    });
+  } catch (error: any) { // Type assertion for error
+    console.error('Failed to start server:', error);
+    // If the specified port fails, try an alternative
+    if (error.code === 'ENOTSUP' || error.code === 'EADDRINUSE') {
+      const altPort = 3000;
+      console.log(`Attempting to use alternative port: ${altPort}`);
+      server.listen(altPort, 'localhost', () => {
+        log(`serving on localhost:${altPort} (alternative port)`);
+      });
+    }
+  }
 })();

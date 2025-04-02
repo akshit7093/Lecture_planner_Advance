@@ -221,6 +221,29 @@ OPENROUTER_API_KEY=your_api_key_here
 npm run dev
 ```
 
+### Troubleshooting Installation Issues
+
+#### Socket Error on Windows
+If you encounter the error `Error: listen ENOTSUP: operation not supported on socket` on Windows:
+
+1. The server has been configured to automatically use 'localhost' instead of '0.0.0.0' to avoid this error
+2. Use the included helper script to start the application:
+   ```
+   # On Windows
+   .\start-local.bat
+   
+   # On Linux/Mac
+   ./start-local.sh
+   # (you may need to run chmod +x start-local.sh first)
+   ```
+3. If the error persists, try running the server on port 3000 by manually modifying the port in `server/index.ts`:
+   ```typescript
+   const port = 3000; // Instead of 5000
+   ```
+
+#### Port Already in Use
+If port 5000 is already in use, the server will automatically try to use port 3000 as an alternative. You should see a message indicating which port is being used in the console output.
+
 ## Configuration
 
 ### Environment Variables
