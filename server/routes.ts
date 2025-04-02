@@ -260,22 +260,52 @@ The response should be a JSON object with the following structure:
 
 Ensure there are at least 5-10 nodes with various content types appropriate for the topic (include questions, equations if relevant, code examples if relevant, and resources). Structure the nodes in a hierarchical way that makes sense for learning the topic progressively.`;
 
-      // Call the OpenRouter API
-      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-        model: "google/gemini-2.5-pro-exp-03-25:free",
-        messages: [
-          { 
-            role: "user", 
-            content: prompt 
+      // Call the OpenRouter API with fallback models in case of rate limits
+      let response;
+      const models = [
+        "google/gemini-2.5-pro-exp-03-25:free", 
+        "google/gemini-1.5-pro:free",
+        "anthropic/claude-3-haiku:free"
+      ];
+      
+      let error;
+      for (const model of models) {
+        try {
+          console.log(`Attempting to use model: ${model}`);
+          response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+            model: model,
+            messages: [
+              { 
+                role: "user", 
+                content: prompt 
+              }
+            ],
+            max_tokens: 4000
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
+            }
+          });
+          
+          // If we get here, the request succeeded, so break out of the loop
+          console.log(`Successfully used model: ${model}`);
+          break;
+        } catch (e: any) {
+          error = e;
+          console.error(`Failed to use model ${model}:`, e.response?.data || e.message);
+          // If this is the last model, re-throw the error
+          if (model === models[models.length - 1]) {
+            throw e;
           }
-        ],
-        max_tokens: 4000
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
+          // Otherwise try the next model
+          continue;
         }
-      });
+      }
+      
+      if (!response) {
+        throw error || new Error("Failed to generate content with any available model");
+      }
 
       // Extract the generated content
       const aiResponse = response.data;
@@ -430,21 +460,52 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
           return res.status(400).json({ message: "Invalid enhancement type" });
       }
 
-      // Call the OpenRouter API
-      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-        model: "google/gemini-2.5-pro-exp-03-25:free",
-        messages: [
-          { 
-            role: "user", 
-            content: prompt 
+      // Call the OpenRouter API with fallback models in case of rate limits
+      let response;
+      const models = [
+        "google/gemini-2.5-pro-exp-03-25:free", 
+        "google/gemini-1.5-pro:free",
+        "anthropic/claude-3-haiku:free"
+      ];
+      
+      let error;
+      for (const model of models) {
+        try {
+          console.log(`Attempting to use model for node enhancement: ${model}`);
+          response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+            model: model,
+            messages: [
+              { 
+                role: "user", 
+                content: prompt 
+              }
+            ],
+            max_tokens: 1000
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
+            }
+          });
+          
+          // If we get here, the request succeeded, so break out of the loop
+          console.log(`Successfully used model for node enhancement: ${model}`);
+          break;
+        } catch (e: any) {
+          error = e;
+          console.error(`Failed to use model ${model} for node enhancement:`, e.response?.data || e.message);
+          // If this is the last model, re-throw the error
+          if (model === models[models.length - 1]) {
+            throw e;
           }
-        ]
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
+          // Otherwise try the next model
+          continue;
         }
-      });
+      }
+      
+      if (!response) {
+        throw error || new Error("Failed to enhance node with any available model");
+      }
 
       // Extract the content from the AI response
       const aiResponse = response.data;
