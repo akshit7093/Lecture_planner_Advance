@@ -16,7 +16,8 @@ import ReactFlow, {
   EdgeMarker,
 } from 'reactflow';
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Link2, Trash2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PlusCircle, Link2, Trash2, RefreshCw } from 'lucide-react';
 import NodeComponent from './Node';
 import { Node as DbNode, Edge as DbEdge } from '@shared/schema';
 import { convertToReactFlowElements, layoutNodes } from '@/lib/api';
@@ -119,6 +120,55 @@ const FlowCanvas = ({
     setSelectedNode(node);
   }, []);
   
+  // Handle double click to focus on connected nodes
+  const onNodeDoubleClick = useCallback((event: React.MouseEvent, node: CustomNode) => {
+    // Get all connected edges
+    const connectedEdges = edges.filter(
+      edge => edge.source === node.id || edge.target === node.id
+    );
+    
+    // Get IDs of all connected nodes
+    const connectedNodeIds = new Set<string>();
+    connectedNodeIds.add(node.id); // Include the clicked node
+    
+    connectedEdges.forEach(edge => {
+      connectedNodeIds.add(edge.source);
+      connectedNodeIds.add(edge.target);
+    });
+    
+    // Highlight connected nodes and edges
+    setNodes(nodes.map(n => ({
+      ...n,
+      style: {
+        ...n.style,
+        opacity: connectedNodeIds.has(n.id) ? 1 : 0.25,
+        boxShadow: n.id === node.id ? '0 0 8px 2px #2B6CB0' : undefined
+      },
+    })));
+    
+    setEdges(edges.map(e => ({
+      ...e,
+      style: {
+        ...e.style,
+        opacity: (connectedNodeIds.has(e.source) && connectedNodeIds.has(e.target)) ? 1 : 0.25,
+        stroke: (e.source === node.id || e.target === node.id) ? '#2B6CB0' : e.style?.stroke || '#718096'
+      },
+      animated: (e.source === node.id || e.target === node.id)
+    })));
+    
+    // Center view on these nodes with animation
+    if (reactFlowInstance) {
+      const nodeArray = nodes.filter(n => connectedNodeIds.has(n.id));
+      if (nodeArray.length > 0) {
+        reactFlowInstance.fitView({
+          padding: 0.3,
+          duration: 800,
+          nodes: nodeArray
+        });
+      }
+    }
+  }, [nodes, edges, reactFlowInstance]);
+  
   // Handle node drag
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: CustomNode) => {
     // Update node position in the database if needed
@@ -175,6 +225,35 @@ const FlowCanvas = ({
     }
   }, [selectedNode]);
   
+  // Reset function to clear all highlighting and return to normal view
+  const resetView = useCallback(() => {
+    // Reset all node styles
+    setNodes(nodes.map(n => ({
+      ...n,
+      style: {
+        ...n.style,
+        opacity: 1,
+        boxShadow: undefined
+      }
+    })));
+    
+    // Reset all edge styles
+    setEdges(edges.map(e => ({
+      ...e,
+      animated: false,
+      style: {
+        ...e.style,
+        opacity: 1,
+        stroke: '#718096'
+      }
+    })));
+    
+    // Fit view to show all nodes
+    if (reactFlowInstance) {
+      reactFlowInstance.fitView({ padding: 0.2, duration: 800 });
+    }
+  }, [nodes, edges, reactFlowInstance]);
+  
   return (
     <div className="flex-1 overflow-hidden relative" ref={reactFlowWrapper}>
       <ReactFlow
@@ -184,6 +263,7 @@ const FlowCanvas = ({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         onInit={setReactFlowInstance}
@@ -207,6 +287,31 @@ const FlowCanvas = ({
       >
         <Background color="#e2e8f0" gap={16} />
         <Controls />
+        
+        {/* User instruction hint */}
+        <Panel position="top-center" className="bg-white shadow-md rounded-md p-2 mt-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-sm text-gray-600 flex items-center cursor-help">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                  </svg>
+                  Double-click any node to highlight connections
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="w-64 text-xs">
+                  Double-click any node to focus on it and see all connected nodes and edges. 
+                  This will dim other nodes and highlight the relevant connections. 
+                  Use the "Reset View" button to clear highlighting.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </Panel>
       </ReactFlow>
       
       {/* Bottom toolbar */}
@@ -238,6 +343,14 @@ const FlowCanvas = ({
             disabled={!selectedNode}
           >
             <Trash2 className="h-4 w-4 mr-1" /> Delete
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center" 
+            onClick={resetView}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" /> Reset View
           </Button>
         </div>
       </div>

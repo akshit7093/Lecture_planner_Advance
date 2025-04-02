@@ -158,9 +158,9 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     }
   });
   
-  // Recursively position nodes
-  const HORIZONTAL_SPACING = 250;
-  const VERTICAL_SPACING = 150;
+  // Recursively position nodes with increased spacing for better readability
+  const HORIZONTAL_SPACING = 350; // Increased from 250
+  const VERTICAL_SPACING = 200;   // Increased from 150
   
   const positionNode = (
     nodeId: string, 
