@@ -114,10 +114,99 @@ const FlowCanvas = ({
     }
   }, [dbNodes]);
   
-  // Handle node selection
+  // Handle node selection on single click
   const onNodeClick = useCallback((_: React.MouseEvent, node: CustomNode) => {
     setSelectedNode(node);
   }, []);
+  
+  // Handle double click to focus on connected nodes
+  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: CustomNode) => {
+    // First, find all connected nodes (both incoming and outgoing connections)
+    const connectedNodeIds = new Set<string>();
+    
+    // Add the selected node
+    connectedNodeIds.add(node.id);
+    
+    // Find all edges connected to this node
+    edges.forEach(edge => {
+      if (edge.source === node.id) {
+        connectedNodeIds.add(edge.target);
+      }
+      if (edge.target === node.id) {
+        connectedNodeIds.add(edge.source);
+      }
+    });
+    
+    // Highlight connected nodes by creating a new array with updated styles
+    const updatedNodes = nodes.map(n => {
+      if (connectedNodeIds.has(n.id)) {
+        // Highlight the connected node
+        return {
+          ...n,
+          style: { ...n.style, boxShadow: '0 0 20px #2B6CB0', border: '2px solid #2B6CB0' }
+        };
+      } else {
+        // Dim other nodes
+        return {
+          ...n,
+          style: { ...n.style, opacity: 0.3 }
+        };
+      }
+    });
+    
+    // Highlight connected edges
+    const updatedEdges = edges.map(edge => {
+      if (connectedNodeIds.has(edge.source) && connectedNodeIds.has(edge.target)) {
+        // Highlight the connected edge
+        return {
+          ...edge,
+          style: { ...edge.style, stroke: '#2B6CB0', strokeWidth: 3 },
+          animated: true
+        };
+      } else {
+        // Dim other edges
+        return {
+          ...edge,
+          style: { ...edge.style, opacity: 0.2 }
+        };
+      }
+    });
+    
+    // Update the nodes and edges with new styles
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
+    
+    // Find the bounds of the connected nodes to fit them in view
+    if (reactFlowInstance) {
+      // Get all nodes that are connected
+      const nodesToFit = nodes.filter(n => connectedNodeIds.has(n.id));
+      
+      if (nodesToFit.length > 0) {
+        // Fit these nodes in view with some padding
+        reactFlowInstance.fitView({
+          padding: 0.3,
+          includeHiddenNodes: false,
+          nodes: nodesToFit
+        });
+      }
+    }
+    
+    // Reset the highlight after 5 seconds
+    setTimeout(() => {
+      // Reset node styles
+      setNodes(nodes => nodes.map(n => ({
+        ...n,
+        style: { ...n.style, boxShadow: undefined, border: undefined, opacity: undefined }
+      })));
+      
+      // Reset edge styles
+      setEdges(edges => edges.map(e => ({
+        ...e,
+        style: { ...e.style, stroke: '#718096', strokeWidth: undefined, opacity: undefined },
+        animated: e.animated // Keep original animated state
+      })));
+    }, 5000);
+  }, [nodes, edges, reactFlowInstance]);
   
   // Handle node drag
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: CustomNode) => {
@@ -184,6 +273,7 @@ const FlowCanvas = ({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         onInit={setReactFlowInstance}
@@ -210,8 +300,13 @@ const FlowCanvas = ({
       </ReactFlow>
       
       {/* Bottom toolbar */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-white border-t border-gray-200 flex items-center justify-center">
-        <div className="flex space-x-2">
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex flex-col items-center justify-center">
+        {/* Tip about double-click */}
+        <div className="w-full text-center py-1 text-xs text-gray-500 bg-blue-50">
+          💡 Tip: Double-click any node to highlight its connections
+        </div>
+        
+        <div className="flex space-x-2 h-12 items-center">
           <Button 
             variant="outline" 
             size="sm" 

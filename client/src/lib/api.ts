@@ -158,9 +158,9 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     }
   });
   
-  // Recursively position nodes
-  const HORIZONTAL_SPACING = 250;
-  const VERTICAL_SPACING = 150;
+  // Recursively position nodes with increased spacing for better readability
+  const HORIZONTAL_SPACING = 350; // Increased from 250
+  const VERTICAL_SPACING = 200;   // Increased from 150
   
   const positionNode = (
     nodeId: string, 
@@ -176,27 +176,56 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     
     const { node, children } = item;
     
+    // Calculate the total space needed for children first to center parent
+    let totalChildrenHeight = 0;
+    if (children.length > 0) {
+      // Pre-calculate children heights
+      children.forEach(() => {
+        totalChildrenHeight += VERTICAL_SPACING;
+      });
+    }
+    
     // Position the current node
     node.position = {
       x: level * HORIZONTAL_SPACING,
       y: verticalPosition
     };
     
-    // Position children
-    let currentY = verticalPosition;
+    // Position children in a balanced tree layout
+    let currentY = verticalPosition - (totalChildrenHeight / 2);
+    if (currentY < 0) currentY = 0; // Make sure we don't position above the viewport
+    
     let totalVerticalSize = 0;
     
-    children.forEach(childNode => {
+    // If this node has only one child, place it directly across
+    if (children.length === 1) {
       const { verticalSize } = positionNode(
-        childNode.id, 
+        children[0].id, 
         level + 1, 
-        currentY,
+        verticalPosition, // Same Y position as parent for direct alignment
         processedNodes
       );
-      
-      currentY += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
-      totalVerticalSize += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
-    });
+      totalVerticalSize = Math.max(VERTICAL_SPACING, verticalSize);
+    } 
+    // If multiple children, distribute them vertically
+    else if (children.length > 1) {
+      children.forEach((childNode, index) => {
+        // Add proper spacing between siblings
+        if (index > 0) {
+          currentY += VERTICAL_SPACING;
+        }
+        
+        const { verticalSize } = positionNode(
+          childNode.id, 
+          level + 1, 
+          currentY,
+          processedNodes
+        );
+        
+        currentY += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
+        totalVerticalSize += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
+      });
+    }
     
     // If no children, return single node height
     if (children.length === 0) {
