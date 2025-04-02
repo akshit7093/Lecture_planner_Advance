@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import config, { validateConfig } from "./config";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +38,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Check if the required configuration is present
+  const isConfigValid = validateConfig();
+  if (!isConfigValid) {
+    console.warn('⚠️ Application will start, but some features may not work correctly.');
+    console.warn('Please set up your .env file based on .env.example');
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -56,30 +64,28 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Get port and host from configuration
+  const { PORT, FALLBACK_PORT, USE_LOCALHOST } = config.server;
+  
   try {
     // For local development use 'localhost' instead of '0.0.0.0'
     // This avoids the ENOTSUP error on some Windows systems
-    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    const host = USE_LOCALHOST ? 'localhost' : '0.0.0.0';
     
     // Remove reusePort option for better cross-platform compatibility
     server.listen({
-      port,
+      port: PORT,
       host
     }, () => {
-      log(`serving on ${host}:${port}`);
+      log(`Server started on ${host}:${PORT}`);
     });
   } catch (error: any) { // Type assertion for error
     console.error('Failed to start server:', error);
-    // If the specified port fails, try an alternative
+    // If the specified port fails, try the fallback port
     if (error.code === 'ENOTSUP' || error.code === 'EADDRINUSE') {
-      const altPort = 3000;
-      console.log(`Attempting to use alternative port: ${altPort}`);
-      server.listen(altPort, 'localhost', () => {
-        log(`serving on localhost:${altPort} (alternative port)`);
+      console.log(`Attempting to use fallback port: ${FALLBACK_PORT}`);
+      server.listen(FALLBACK_PORT, 'localhost', () => {
+        log(`Server started on localhost:${FALLBACK_PORT} (fallback port)`);
       });
     }
   }

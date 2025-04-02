@@ -11,6 +11,7 @@ import {
   type InsertNode,
   type Node as DbNode
 } from "@shared/schema";
+import config from "./config";
 
 // Helper function to sanitize specific fields in node data for JSON
 function sanitizeNodeData(node: any): any {
@@ -285,72 +286,84 @@ The response should be a JSON object with the following structure:
 
 Ensure there are at least 5-10 nodes with various content types appropriate for the topic (include questions, equations if relevant, code examples if relevant, and resources). Structure the nodes in a hierarchical way that makes sense for learning the topic progressively.`;
 
-      // Call the OpenRouter API with only google/gemini-2.5-pro-exp-03-25:free model as requested
-      console.log(`Attempting to use model: google/gemini-2.5-pro-exp-03-25:free`);
+      // Call the OpenRouter API using the configured model
+      const { MODEL_NAME, OPENROUTER_API_KEY, OPENROUTER_BASE_URL } = config.api;
+      
+      console.log(`Attempting to use model: ${MODEL_NAME}`);
       const start = Date.now();
-      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-        model: "google/gemini-2.5-pro-exp-03-25:free",
-        messages: [
-          { 
-            role: "user", 
-            content: prompt 
-          }
-        ],
-        // No token limit as requested
-        // max_tokens: 6000
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
-        }
-      });
       
-      const duration = Date.now() - start;
-      console.log(`Successfully used model: google/gemini-2.5-pro-exp-03-25:free`, {
-        model: "google/gemini-2.5-pro-exp-03-25:free", 
-        statusCode: response.status,
-        responseSize: JSON.stringify(response.data).length,
-        duration: `${duration}ms`,
-      });
-
-      // Extract the generated content
-      const aiResponse = response.data;
-      console.log("API Response:", JSON.stringify(aiResponse, null, 2));
+      // Check if API key is available
+      if (!OPENROUTER_API_KEY) {
+        console.warn('OpenRouter API key is missing. Please set it in your .env file.');
+        return res.status(400).json({ 
+          message: "API key is required. Please set OPENROUTER_API_KEY in your .env file."
+        });
+      }
       
-      // Parse the JSON content from the AI response
-      let jsonContent;
       try {
-        // Make sure we're accessing the response structure correctly
-        if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
-          console.error("Unexpected API response structure:", aiResponse);
-          return res.status(500).json({ 
-            message: "Unexpected API response structure",
-            aiResponse: aiResponse
-          });
-        }
+        const response = await axios.post(OPENROUTER_BASE_URL, {
+          model: MODEL_NAME,
+          messages: [
+            { 
+              role: "user", 
+              content: prompt 
+            }
+          ],
+          // No token limit as requested
+          // max_tokens: 6000
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+          }
+        });
         
-        const content = aiResponse.choices[0].message.content;
-        console.log("Content from API:", content);
-        
-        // Enhanced JSON extraction and repair mechanism
-        console.log("Attempting to extract and fix JSON from content...");
-        
-        // First try the standard JSON extraction patterns
-        const jsonMatch = content.match(/```(?:json)?([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
-        
-        let jsonText = "";
-        if (jsonMatch && jsonMatch[1]) {
-          jsonText = jsonMatch[1].trim();
-        } else {
-          // If no clear JSON marker, use the whole content
-          jsonText = content;
-        }
-        
-        // Try to repair and extract a valid JSON object
+        const duration = Date.now() - start;
+        console.log(`Successfully used model: ${MODEL_NAME}`, {
+          model: MODEL_NAME, 
+          statusCode: response.status,
+          responseSize: JSON.stringify(response.data).length,
+          duration: `${duration}ms`,
+        });
+
+        // Extract the generated content
+        const aiResponse = response.data;
+        console.log("API Response:", JSON.stringify(aiResponse, null, 2));
+      
+        // Parse the JSON content from the AI response
+        let jsonContent;
         try {
-          // Attempt standard parsing first
-          jsonContent = JSON.parse(jsonText);
-          console.log("Successfully parsed JSON with standard method");
+          // Make sure we're accessing the response structure correctly
+          if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
+            console.error("Unexpected API response structure:", aiResponse);
+            return res.status(500).json({ 
+              message: "Unexpected API response structure",
+              aiResponse: aiResponse
+            });
+          }
+        
+          const content = aiResponse.choices[0].message.content;
+          console.log("Content from API:", content);
+          
+          // Enhanced JSON extraction and repair mechanism
+          console.log("Attempting to extract and fix JSON from content...");
+          
+          // First try the standard JSON extraction patterns
+          const jsonMatch = content.match(/```(?:json)?([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
+          
+          let jsonText = "";
+          if (jsonMatch && jsonMatch[1]) {
+            jsonText = jsonMatch[1].trim();
+          } else {
+            // If no clear JSON marker, use the whole content
+            jsonText = content;
+          }
+        
+          // Try to repair and extract a valid JSON object
+          try {
+            // Attempt standard parsing first
+            jsonContent = JSON.parse(jsonText);
+            console.log("Successfully parsed JSON with standard method");
         } catch (error) {
           const parseError = error as Error;
           console.error("Standard JSON parsing failed:", parseError.message);
@@ -687,33 +700,51 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
       });
       
       const start = Date.now();
-      const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-        model: "google/gemini-2.5-pro-exp-03-25:free",
-        messages: [
-          { 
-            role: "user", 
-            content: prompt 
+      let response;
+      try {
+        response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+          model: "google/gemini-2.5-pro-exp-03-25:free",
+          messages: [
+            { 
+              role: "user", 
+              content: prompt 
+            }
+          ],
+          // No token limit as requested
+          // max_tokens: 2000
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
           }
-        ],
-        // No token limit as requested
-        // max_tokens: 2000
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY || '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'}`
-        }
-      });
-      
-      const duration = Date.now() - start;
-      console.log(`Successfully used model for node enhancement: google/gemini-2.5-pro-exp-03-25:free`, {
-        model: "google/gemini-2.5-pro-exp-03-25:free",
-        enhanceType,
-        nodeId,
-        title: nodeData.title,
-        statusCode: response.status,
-        responseSize: JSON.stringify(response.data).length,
-        duration: `${duration}ms`
-      });
+        });
+        
+        const duration = Date.now() - start;
+        console.log(`Successfully used model for node enhancement: google/gemini-2.5-pro-exp-03-25:free`, {
+          model: "google/gemini-2.5-pro-exp-03-25:free",
+          enhanceType,
+          nodeId,
+          title: nodeData.title,
+          statusCode: response.status,
+          responseSize: JSON.stringify(response.data).length,
+          duration: `${duration}ms`
+        });
+      } catch (error: any) {
+        console.error("Error calling OpenRouter API for node enhancement:", error.message);
+        console.error("Error details:", {
+          statusCode: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          enhanceType, 
+          nodeId,
+          title: nodeData.title
+        });
+        
+        return res.status(500).json({ 
+          message: "Failed to enhance node", 
+          error: error.response?.data || error.message
+        });
+      }
 
       // Extract the content from the AI response
       const aiResponse = response.data;
