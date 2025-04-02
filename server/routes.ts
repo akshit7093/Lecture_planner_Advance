@@ -325,7 +325,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
           // Attempt standard parsing first
           jsonContent = JSON.parse(jsonText);
           console.log("Successfully parsed JSON with standard method");
-        } catch (parseError) {
+        } catch (error) {
+          const parseError = error as Error;
           console.error("Standard JSON parsing failed:", parseError.message);
           
           // Attempt JSON repair techniques:
@@ -344,7 +345,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
               // Try to parse the extracted object
               jsonContent = JSON.parse(extractedObject);
               console.log("Successfully parsed extracted JSON object");
-            } catch (extractError) {
+            } catch (error) {
+              const extractError = error as Error;
               console.error("Extracted object parsing failed:", extractError.message);
               
               // 2. Further try to fix common issues with AI-generated JSON
@@ -358,7 +360,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
                 
                 jsonContent = JSON.parse(fixedText);
                 console.log("Successfully parsed fixed JSON");
-              } catch (fixError) {
+              } catch (error) {
+                const fixError = error as Error;
                 console.error("JSON fixing attempt failed:", fixError.message);
                 throw new Error("Could not parse valid JSON structure after repair attempts: " + fixError.message);
               }
@@ -549,31 +552,111 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
       
       if (enhanceType === 'resources') {
         try {
-          // Try to extract JSON from the response
+          console.log("Attempting to parse resources JSON...");
+          
+          // Try standard JSON extraction first
           const jsonMatch = content.match(/```(?:json)?([\s\S]*?)```/) || content.match(/(\[[\s\S]*\])/);
-          if (jsonMatch) {
-            enhancementContent = JSON.parse(jsonMatch[1].trim());
+          
+          let jsonText = "";
+          if (jsonMatch && jsonMatch[1]) {
+            jsonText = jsonMatch[1].trim();
           } else {
-            // Fallback: parse as text and create structured data
-            const resources = content.split('\n')
-              .filter((line: string) => line.trim().length > 0 && (line.includes('http') || line.includes('www')))
-              .map((line: string) => {
-                const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
-                const url = urlMatch ? urlMatch[1] : '';
-                const title = line.replace(url, '').replace(/[:-]\s*/, '').trim();
-                return { title: title || 'Resource', url };
-              });
-            enhancementContent = resources;
+            // If no clear JSON marker, look for anything that resembles an array
+            const arrayStart = content.indexOf('[');
+            const arrayEnd = content.lastIndexOf(']');
+            
+            if (arrayStart >= 0 && arrayEnd > arrayStart) {
+              jsonText = content.substring(arrayStart, arrayEnd + 1);
+              console.log(`Extracted potential JSON array from index ${arrayStart} to ${arrayEnd}`);
+            }
+          }
+          
+          // Try to parse the JSON
+          try {
+            // Standard parsing
+            if (jsonText) {
+              enhancementContent = JSON.parse(jsonText);
+              console.log("Successfully parsed resources JSON");
+            } else {
+              throw new Error("No JSON array found in content");
+            }
+          } catch (error) {
+            const parseError = error as Error;
+            console.error("Standard JSON parsing failed:", parseError.message);
+            
+            // Try to fix common issues
+            try {
+              // Replace newlines, fix quotes, trailing commas
+              let fixedText = jsonText
+                .replace(/[\n\r]/g, ' ')                   // Remove newlines
+                .replace(/,(\s*[\}\]])/g, '$1')            // Remove trailing commas
+                .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure property names have double quotes
+                .replace(/\'/g, '"');                      // Replace single quotes with double quotes
+              
+              enhancementContent = JSON.parse(fixedText);
+              console.log("Successfully parsed fixed resources JSON");
+            } catch (error) {
+              const fixError = error as Error;
+              console.error("Resources JSON fixing attempt failed:", fixError.message);
+              
+              // Fallback: parse as text and create structured data
+              console.log("Using fallback URL extraction for resources");
+              const resources = content.split('\n')
+                .filter((line: string) => line.trim().length > 0 && (line.includes('http') || line.includes('www')))
+                .map((line: string) => {
+                  const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
+                  const url = urlMatch ? urlMatch[1] : '';
+                  const title = line.replace(url, '').replace(/[:-]\s*/, '').trim();
+                  return { title: title || 'Resource', url };
+                });
+              
+              if (resources.length > 0) {
+                enhancementContent = resources;
+                console.log(`Extracted ${resources.length} resources using URL pattern matching`);
+              } else {
+                // Last resort fallback
+                console.error("Could not extract any resources from content");
+                enhancementContent = [];
+              }
+            }
           }
         } catch (error: any) {
           console.error("Error parsing resources:", error);
-          enhancementContent = [{ title: "Generated Resource", url: "https://example.com" }];
+          enhancementContent = [];
         }
       } else {
-        // For other types, split by newlines and filter empty lines
-        enhancementContent = content.split('\n')
-          .filter((line: string) => line.trim().length > 0)
-          .map((line: string) => line.replace(/^\d+\.\s*/, '').trim()); // Remove numbering
+        // For other types (questions, equations, codeExamples)
+        console.log(`Processing ${enhanceType} as text list...`);
+        
+        // For code examples, try to preserve code blocks
+        if (enhanceType === 'codeExamples') {
+          const codeBlocks = [];
+          const codeBlockRegex = /```(?:\w+)?\s*([\s\S]*?)```/g;
+          let match;
+          
+          while ((match = codeBlockRegex.exec(content)) !== null) {
+            codeBlocks.push(match[1].trim());
+          }
+          
+          if (codeBlocks.length > 0) {
+            enhancementContent = codeBlocks;
+            console.log(`Extracted ${codeBlocks.length} code blocks`);
+          } else {
+            // Fall back to line-by-line for code if no code blocks
+            enhancementContent = content.split('\n\n')
+              .filter((block: string) => block.trim().length > 0)
+              .map((block: string) => block.trim());
+            
+            console.log(`Extracted ${enhancementContent.length} code examples by paragraph`);
+          }
+        } else {
+          // For questions and equations, split by newlines and filter empty lines
+          enhancementContent = content.split('\n')
+            .filter((line: string) => line.trim().length > 0)
+            .map((line: string) => line.replace(/^\d+\.\s*/, '').trim()); // Remove numbering
+          
+          console.log(`Extracted ${enhancementContent.length} ${enhanceType} items`);
+        }
       }
 
       // Create the appropriate update object based on enhancement type
