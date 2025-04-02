@@ -306,14 +306,67 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         const content = aiResponse.choices[0].message.content;
         console.log("Content from API:", content);
         
-        // Extract JSON object if it's wrapped in backticks or other formatting
+        // Enhanced JSON extraction and repair mechanism
+        console.log("Attempting to extract and fix JSON from content...");
+        
+        // First try the standard JSON extraction patterns
         const jsonMatch = content.match(/```(?:json)?([\s\S]*?)```/) || content.match(/(\{[\s\S]*\})/);
         
+        let jsonText = "";
         if (jsonMatch && jsonMatch[1]) {
-          jsonContent = JSON.parse(jsonMatch[1].trim());
+          jsonText = jsonMatch[1].trim();
         } else {
-          // Try to parse the whole response as JSON
-          jsonContent = JSON.parse(content);
+          // If no clear JSON marker, use the whole content
+          jsonText = content;
+        }
+        
+        // Try to repair and extract a valid JSON object
+        try {
+          // Attempt standard parsing first
+          jsonContent = JSON.parse(jsonText);
+          console.log("Successfully parsed JSON with standard method");
+        } catch (parseError) {
+          console.error("Standard JSON parsing failed:", parseError.message);
+          
+          // Attempt JSON repair techniques:
+          console.log("Attempting JSON repair...");
+          
+          // 1. Try to find the main JSON structure bounds
+          const objectStart = jsonText.indexOf('{');
+          const objectEnd = jsonText.lastIndexOf('}');
+          
+          if (objectStart >= 0 && objectEnd > objectStart) {
+            // Extract what appears to be the main object
+            const extractedObject = jsonText.substring(objectStart, objectEnd + 1);
+            console.log(`Extracted potential JSON object from index ${objectStart} to ${objectEnd}`);
+            
+            try {
+              // Try to parse the extracted object
+              jsonContent = JSON.parse(extractedObject);
+              console.log("Successfully parsed extracted JSON object");
+            } catch (extractError) {
+              console.error("Extracted object parsing failed:", extractError.message);
+              
+              // 2. Further try to fix common issues with AI-generated JSON
+              try {
+                // Replace newlines, fix quotes, trailing commas, etc.
+                let fixedText = extractedObject
+                  .replace(/[\n\r]/g, ' ')                   // Remove newlines
+                  .replace(/,(\s*[\}\]])/g, '$1')            // Remove trailing commas
+                  .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure property names have double quotes
+                  .replace(/\'/g, '"');                      // Replace single quotes with double quotes
+                
+                jsonContent = JSON.parse(fixedText);
+                console.log("Successfully parsed fixed JSON");
+              } catch (fixError) {
+                console.error("JSON fixing attempt failed:", fixError.message);
+                throw new Error("Could not parse valid JSON structure after repair attempts: " + fixError.message);
+              }
+            }
+          } else {
+            console.error("Could not locate valid JSON object bounds in the content");
+            throw new Error("Could not locate valid JSON object in the AI response");
+          }
         }
         
         // Validate essential fields are present
