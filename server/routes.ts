@@ -271,7 +271,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
             content: prompt 
           }
         ],
-        max_tokens: 6000
+        // No token limit as requested
+        // max_tokens: 6000
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -663,7 +664,8 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
             content: prompt 
           }
         ],
-        max_tokens: 2000
+        // No token limit as requested
+        // max_tokens: 2000
       }, {
         headers: {
           'Content-Type': 'application/json',
