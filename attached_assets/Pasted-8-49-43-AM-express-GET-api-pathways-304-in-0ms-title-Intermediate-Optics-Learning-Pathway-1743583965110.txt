@@ -1,0 +1,275 @@
+8:49:43 AM [express] GET /api/pathways 304 in 0ms :: [{"title":"Intermediate Optics Learning Pathway…
+Attempting to use model: google/gemini-2.5-pro-exp-03-25:free
+Successfully used model: google/gemini-2.5-pro-exp-03-25:free {
+  model: 'google/gemini-2.5-pro-exp-03-25:free',
+  statusCode: 200,
+  responseSize: 17196,
+  duration: '105075ms'
+}
+API Response: {
+  "id": "gen-1743583792-UPoeza8sC0emqGCayQqR",
+  "provider": "Google AI Studio",
+  "model": "google/gemini-2.5-pro-exp-03-25",
+  "object": "chat.completion",
+  "created": 1743583792,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "native_finish_reason": "STOP",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "```json\n{\n  \"title\": \"Intermediate Optics Learning Pathway (Weekly)\",\n  \"nodes\": [\n    {\n      \"id\": \"optics-main\",\n      \"parentId\": null,\n      \"title\": \"Intermediate Optics\",\n      \"description\": \"An 8-week pathway to understanding key concepts in optics at an intermediate level, covering wave optics, polarization, and foundational modern optics.\",\n      \"topics\": [\"Geometric Optics Review\", \"Wave Optics\", \"Interference\", \"Diffraction\", \"Polarization\", \"Fourier Optics\", \"Lasers\", \"Fiber Optics\"],\n      \"questions\": [],\n      \"resources\": [\n        {\"title\": \"Hecht - Optics (Textbook)\", \"url\": \"https://www.pearson.com/us/higher-education/program/Hecht-Optics-5th-Edition/PGM279361.html\"},\n        {\"title\": \"MIT OpenCourseWare - Physics III: Vibrations and Waves\", \"url\": \"https://ocw.mit.edu/courses/8-03sc-physics-iii-vibrations-and-waves-fall-2016/\"}\n      ],\n      \"equations\": [],\n      \"codeExamples\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-1-geom-wave-intro\",\n      \"parentId\": \"optics-main\",\n      \"title\": \"Week 1: Geometric Optics Review & Wave Nature Introduction\",\n      \"description\": \"Review fundamental principles of geometric optics using ray tracing and matrix methods, and introduce the wave nature of light via Huygens' principle.\",\n      \"topics\": [\"Fermat's Principle\", \"Snell's Law\", \"Thin Lenses\", \"Lensmaker's Equation\", \"Matrix Methods in Paraxial Optics\", \"Huygens' Principle\", \"Wavefronts\"],\n      \"questions\": [\n        \"Derive the thin lens equation using Snell's law approximations or Fermat's principle.\",\n        \"Calculate the image position and magnification for a two-lens system using ray transfer matrices.\",\n        \"How does Huygens' principle explain reflection and refraction?\"\n      ],\n      \"resources\": [\n        {\"title\": \"HyperPhysics: Geometric Optics\", \"url\": \"http://hyperphysics.phy-astr.gsu.edu/hbase/geoopt/goptoc.html\"},\n        {\"title\": \"Matrix Methods in Optics Simulation\", \"url\": \"https://physics.weber.edu/schroeder/optics/matrixmethods.html\"}\n      ],\n      \"equations\": [\n        \"n1 * sin(θ1) = n2 * sin(θ2) (Snell's Law)\",\n        \"1/f = (n-1) * (1/R1 - 1/R2) (Lensmaker's Eq.)\",\n        \"1/so + 1/si = 1/f (Thin Lens Eq.)\",\n        \"M = [[A, B], [C, D]] (Ray Transfer Matrix)\"\n      ],\n      \"codeExamples\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-2-interference\",\n      \"parentId\": \"week-1-geom-wave-intro\",\n      \"title\": \"Week 2: Wave Superposition & Interference\",\n      \"description\": \"Explore the principle of superposition and its application to interference phenomena, including Young's double-slit experiment and thin films.\",\n      \"topics\": [\"Principle of Superposition\", \"Coherence (Temporal, Spatial)\", \"Young's Double Slit Experiment\", \"Path Difference\", \"Optical Path Length\", \"Interference in Thin Films\", \"Michelson Interferometer\"],\n      \"questions\": [\n        \"Explain the conditions necessary for observing sustained interference patterns.\",\n        \"Calculate the fringe spacing for a given double-slit setup.\",\n        \"Why do thin films (like soap bubbles) show colors?\",\n        \"Describe how a Michelson interferometer can be used to measure wavelength.\"\n      ],\n      \"resources\": [\n        {\"title\": \"PhET Simulation: Wave Interference\", \"url\": \"https://phet.colorado.edu/en/simulation/wave-interference\"},\n        {\"title\": \"Hecht - Chapter 7 & 9 (Interference)\", \"url\": \"Textbook Reference\"}\n      ],\n      \"equations\": [\n        \"Δφ = (2π/λ) * Δx (Phase difference from path difference)\",\n        \"I = I1 + I2 + 2*sqrt(I1*I2)*cos(Δφ) (Superposition Intensity)\",\n        \"d * sin(θ) = mλ (Constructive Interference - Slits)\",\n        \"y_m = (mλL)/d (Fringe position on screen)\"\n      ],\n      \"codeExamples\": [\n\"import numpy as np\\nimport matplotlib.pyplot as plt\\n\\n# Simulate Young's Double Slit Intensity\\nL = 1.0  # screen distance\\nd = 0.1e-3 # slit separation\\nwavelength = 600e-9 # lambda\\nI0 = 1 # intensity from one slit\\n\\ny_screen = np.linspace(-0.05, 0.05, 500)\\ntheta = np.arctan(y_screen / L) # Small angle approx: theta ~ y/L\\ndelta_phi = (2 * np.pi / wavelength) * d * np.sin(theta)\\nIntensity = 4 * I0 * (np.cos(delta_phi / 2))**2\\n\\nplt.plot(y_screen * 1000, Intensity)\\nplt.title('Young\\'s Double Slit Interference Pattern')\\nplt.xlabel('Position on screen (mm)')\\nplt.ylabel('Intensity')\\nplt.show()\"\n      ],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-3-diffraction\",\n      \"parentId\": \"week-2-interference\",\n      \"title\": \"Week 3: Diffraction\",\n      \"description\": \"Study the bending of light waves around obstacles, focusing on Fraunhofer diffraction patterns from slits, apertures, and gratings, and the concept of resolution.\",\n      \"topics\": [\"Huygens-Fresnel Principle\", \"Fraunhofer vs Fresnel Diffraction\", \"Single Slit Diffraction\", \"Circular Aperture Diffraction (Airy Disk)\", \"Diffraction Grating\", \"Resolution\", \"Rayleigh Criterion\"],\n      \"questions\": [\n        \"How does diffraction differ from interference?\",\n        \"Calculate the positions of the minima in a single-slit diffraction pattern.\",\n        \"What determines the resolving power of a telescope or microscope?\",\n        \"Explain how a diffraction grating separates different wavelengths of light.\"\n      ],\n      \"resources\": [\n        {\"title\": \"HyperPhysics: Diffraction\", \"url\": \"http://hyperphysics.phy-astr.gsu.edu/hbase/phyopt/diffrac.html\"},\n         {\"title\": \"Hecht - Chapter 10 (Diffraction)\", \"url\": \"Textbook Reference\"}\n      ],\n      \"equations\": [\n        \"a * sin(θ) = mλ (Minima for Single Slit, m≠0)\",\n        \"I(θ) = I0 * [sin(β)/β]^2, where β = (πa/λ)sin(θ) (Single Slit Intensity)\",\n        \"d * sin(θ) = mλ (Maxima for Grating)\",\n        \"θ_min ≈ 1.22 * λ / D (Rayleigh Criterion for circular aperture)\"\n      ],\n      \"codeExamples\": [\n\"import numpy as np\\nimport matplotlib.pyplot as plt\\n\\n# Simulate Single Slit Diffraction Intensity\\na = 0.05e-3 # slit width\\nwavelength = 500e-9\\nL = 1.0 # screen distance\\nI0 = 1\\n\\ny_screen = np.linspace(-0.04, 0.04, 1000)\\ntheta = np.arctan(y_screen / L)\\nbeta = (np.pi * a / wavelength) * np.sin(theta)\\n\\n# Avoid division by zero at beta=0\\nIntensity = I0 * (np.sin(beta + 1e-9) / (beta + 1e-9))**2\\n\\nplt.plot(y_screen * 1000, Intensity)\\nplt.title('Single Slit Diffraction Pattern')\\nplt.xlabel('Position on screen (mm)')\\nplt.ylabel('Intensity')\\nplt.show()\"\n      ],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-4-polarization\",\n      \"parentId\": \"week-3-diffraction\",\n      \"title\": \"Week 4: Polarization\",\n      \"description\": \"Investigate the transverse nature of light waves and the phenomenon of polarization, including methods of production and manipulation.\",\n      \"topics\": [\"Linear, Circular, Elliptical Polarization\", \"Polarizers (Dichroism)\", \"Polarization by Reflection (Brewster's Angle)\", \"Polarization by Scattering\", \"Malus's Law\", \"Birefringence\", \"Wave Plates (Quarter-wave, Half-wave)\"],\n      \"questions\": [\n        \"Describe the difference between unpolarized, linearly polarized, and circularly polarized light.\",\n        \"How does a polarizing filter work?\",\n        \"Calculate the Brewster's angle for light incident from air onto glass (n=1.5).\",\n        \"What happens to linearly polarized light passing through a quarter-wave plate at 45 degrees to its fast axis?\"\n      ],\n      \"resources\": [\n        {\"title\": \"HyperPhysics: Polarization\", \"url\": \"http://hyperphysics.phy-astr.gsu.edu/hbase/phyopt/polcon.html\"},\n        {\"title\": \"Thorlabs: Polarization Tutorial\", \"url\": \"https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=77\"},\n        {\"title\": \"Hecht - Chapter 8 (Polarization)\", \"url\": \"Textbook Reference\"}\n      ],\n      \"equations\": [\n        \"I = I0 * cos^2(θ) (Malus's Law)\",\n        \"tan(θ_B) = n2 / n1 (Brewster's Angle)\",\n        \"Phase retardation (Wave Plate) Γ = (2π/λ)*(ne - no)*d \"\n      ],\n      \"codeExamples\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-5-fourier-optics-intro\",\n      \"parentId\": \"week-4-polarization\",\n      \"title\": \"Week 5: Introduction to Fourier Optics\",\n      \"description\": \"Introduce the powerful concept of using Fourier analysis to understand diffraction, image formation, and optical information processing.\",\n      \"topics\": [\"Fourier Transform Basics\", \"Spatial Frequency\", \"Diffraction as a Fourier Transform\", \"Fourier Transforming Property of a Lens\", \"Abbe Theory of Image Formation\", \"Spatial Filtering Concepts\"],\n      \"questions\": [\n        \"What is the physical meaning of spatial frequency?\",\n        \"Explain qualitatively how a lens can perform a Fourier transform.\",\n        \"How does spatial filtering work in an optical system?\",\n        \"Relate the resolution limit (Rayleigh criterion) to the concept of spatial frequencies.\"\n      ],\n      \"resources\": [\n        {\"title\": \"Goodman - Introduction to Fourier Optics (Textbook)\", \"url\": \"https://www.spiedigitallibrary.org/ebooks/FG/Introduction-to-Fourier-Optics/eFG15\"},\n        {\"title\": \"Lectures on Fourier Optics (e.g., YouTube search)\", \"url\": \"https://www.youtube.com/\"}\n      ],\n      \"equations\": [\n        \"U(fx, fy) = FT{u(x, y)} (Fourier Transform Relation)\",\n        \"u_f(x, y) ∝ FT{t_A(x'/λf, y'/λf)} (FT property of lens, relating aperture transmission t_A to focal plane field u_f)\"\n      ],\n      \"codeExamples\": [\n\"import numpy as np\\nimport matplotlib.pyplot as plt\\nfrom numpy.fft import fft2, fftshift\\n\\n# Simulate FT of a circular aperture\\nN = 512\\nx = np.linspace(-1, 1, N)\\ny = np.linspace(-1, 1, N)\\nX, Y = np.meshgrid(x, y)\\nradius = 0.1\\naperture = X**2 + Y**2 < radius**2\\n\\nft_aperture = fftshift(fft2(aperture))\\nintensity_pattern = np.abs(ft_aperture)**2\\n\\nplt.figure(figsize=(10, 5))\\nplt.subplot(1, 2, 1)\\nplt.imshow(aperture, cmap='gray')\\nplt.title('Circular Aperture')\\n\\nplt.subplot(1, 2, 2)\\n# Display logarithm for better visualization\\nplt.imshow(np.log(intensity_pattern + 1e-6), cmap='hot') \\nplt.title('Fourier Transform (Intensity - Log Scale)')\\nplt.show()\"\n      ],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-6-lasers-fibers\",\n      \"parentId\": \"week-5-fourier-optics-intro\",\n      \"title\": \"Week 6: Lasers and Fiber Optics Basics\",\n      \"description\": \"Explore the principles behind laser operation and the fundamentals of light propagation in optical fibers.\",\n      \"topics\": [\"Stimulated Emission\", \"Population Inversion\", \"Optical Resonators\", \"Laser Gain\", \"Basic Laser Types (HeNe, Diode)\", \"Gaussian Beams (Introduction)\", \"Total Internal Reflection (TIR)\", \"Optical Fibers\", \"Numerical Aperture (NA)\", \"Modes in Fibers\", \"Attenuation\"],\n      \"questions\": [\n        \"What are the three main processes involved in light-matter interaction relevant to lasers?\",\n        \"Explain the role of the resonant cavity in a laser.\",\n        \"What is population inversion and why is it necessary for lasing?\",\n        \"How does light propagate along an optical fiber?\",\n        \"Define Numerical Aperture and explain its significance.\"\n      ],\n      \"resources\": [\n        {\"title\": \"HyperPhysics: Lasers\", \"url\": \"http://hyperphysics.phy-astr.gsu.edu/hbase/optmod/lascon.html\"},\n        {\"title\": \"RP Photonics Encyclopedia\", \"url\": \"https://www.rp-photonics.com/encyclopedia.html\"},\n        {\"title\": \"Hecht - Chapters 13 (Lasers) & related fiber optics sections\", \"url\": \"Textbook Reference\"}\n      ],\n      \"equations\": [\n        \"Gain > Loss (Lasing Threshold Condition)\",\n        \"w(z) = w0 * sqrt(1 + (z/zR)^2) (Gaussian beam spot size)\",\n        \"θ(z) ≈ λ / (π * w0) (Gaussian beam divergence - far field)\",\n        \"NA = sqrt(n_core^2 - n_cladding^2) = n_in * sin(θ_max) (Numerical Aperture)\"\n      ],\n      \"codeExamples\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"week-7-applications-review\",\n      \"parentId\": \"week-6-lasers-fibers\",\n      \"title\": \"Week 7: Optical Systems and Applications\",\n      \"description\": \"Revisit optical instruments with wave optics considerations and explore applications like holography. Consolidate understanding of interference, diffraction, and polarization effects in systems.\",\n      \"topics\": [\"Microscope Resolution Revisited (Abbe Limit)\", \"Telescope Resolution\", \"Interferometry Applications (Metrology, Spectroscopy)\", \"Holography Principles\", \"Brief Intro to Nonlinear Optics Concepts (Frequency Doubling)\", \"System-level examples\"],\n      \"questions\": [\n        \"How does diffraction limit the resolution of a microscope?\",\n        \"Explain the basic principle behind recording and reconstructing a hologram.\",\n        \"Describe one practical application of interferometry.\",\n        \"How do the concepts learned (interference, diffraction, polarization) influence the design of optical instruments?\"\n      ],\n      \"resources\": [\n        {\"title\": \"Review previous weeks' materials\", \"url\": \"#\"},\n        {\"title\": \"Hecht - Relevant application chapters/sections\", \"url\": \"Textbook Reference\"}\n      ],\n      \"equations\": [\n        \"Resolution ≈ 0.61 * λ / NA (Microscope resolution)\",\n        \"Holography recording/reconstruction equations (conceptual understanding)\"\n      ],\n      \"codeExamples\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n     {\n      \"id\": \"week-8-consolidation\",\n      \"parentId\": \"week-7-applications-review\",\n      \"title\": \"Week 8: Consolidation and Further Study\",\n      \"description\": \"Review key concepts across the entire pathway. Solve integrated problems. Identify areas for further study in advanced optics.\",\n      \"topics\": [\"Review of Wave Phenomena\", \"Review of Polarization\", \"Review of Fourier Optics\", \"Integrated Problem Solving\", \"Topics for Advanced Study (Nonlinear Optics, Quantum Optics, Statistical Optics, Advanced Microscopy)\"],\n      \"questions\": [\n        \"Consider light passing through a polarizer, then a half-wave plate, then another polarizer. Calculate the final intensity.\",\n        \"Relate the spatial frequency content of an object to the resolution limit of an imaging system.\",\n        \"Design a simple Michelson interferometer setup to measure the refractive index change in a gas cell.\"\n        ],\n      \"resources\": [\n        {\"title\": \"SPIE - Optics Education Resources\", \"url\": \"https://spie.org/education\"},\n        {\"title\": \"Optica (formerly OSA) - Education Resources\", \"url\": \"https://www.optica.org/en-us/education_resources/\"}\n      ],\n      \"equations\": [\n        \"Review of key equations from Weeks 1-7\"\n        ],\n      \"codeExamples\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    }\n  ],\n  \"edges\": [\n    {\"id\": \"edge-main-1\", \"source\": \"optics-main\", \"target\": \"week-1-geom-wave-intro\", \"label\": \"Starts with\", \"animated\": false},\n    {\"id\": \"edge-1-2\", \"source\": \"week-1-geom-wave-intro\", \"target\": \"week-2-interference\", \"label\": \"Leads to\", \"animated\": true},\n    {\"id\": \"edge-2-3\", \"source\": \"week-2-interference\", \"target\": \"week-3-diffraction\", \"label\": \"Leads to\", \"animated\": true},\n    {\"id\": \"edge-3-4\", \"source\": \"week-3-diffraction\", \"target\": \"week-4-polarization\", \"label\": \"Leads to\", \"animated\": true},\n    {\"id\": \"edge-4-5\", \"source\": \"week-4-polarization\", \"target\": \"week-5-fourier-optics-intro\", \"label\": \"Leads to\", \"animated\": true},\n    {\"id\": \"edge-5-6\", \"source\": \"week-5-fourier-optics-intro\", \"target\": \"week-6-lasers-fibers\", \"label\": \"Leads to\", \"animated\": true},\n    {\"id\": \"edge-6-7\", \"source\": \"week-6-lasers-fibers\", \"target\": \"week-7-applications-review\", \"label\": \"Leads to\", \"animated\": true},\n     {\"id\": \"edge-7-8\", \"source\": \"week-7-applications-review\", \"target\": \"week-8-consolidation\", \"label\": \"Leads to\", \"animated\": true}\n  ]\n}\n```",
+        "refusal": null
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 494,
+    "completion_tokens": 4554,
+    "total_tokens": 5048
+  }
+}
+Content from API: ```json
+{
+  "title": "Intermediate Optics Learning Pathway (Weekly)",
+  "nodes": [
+    {
+      "id": "optics-main",
+      "parentId": null,
+      "title": "Intermediate Optics",
+      "description": "An 8-week pathway to understanding key concepts in optics at an intermediate level, covering wave optics, polarization, and foundational modern optics.",
+      "topics": ["Geometric Optics Review", "Wave Optics", "Interference", "Diffraction", "Polarization", "Fourier Optics", "Lasers", "Fiber Optics"],
+      "questions": [],
+      "resources": [
+        {"title": "Hecht - Optics (Textbook)", "url": "https://www.pearson.com/us/higher-education/program/Hecht-Optics-5th-Edition/PGM279361.html"},
+        {"title": "MIT OpenCourseWare - Physics III: Vibrations and Waves", "url": "https://ocw.mit.edu/courses/8-03sc-physics-iii-vibrations-and-waves-fall-2016/"}
+      ],
+      "equations": [],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-1-geom-wave-intro",
+      "parentId": "optics-main",
+      "title": "Week 1: Geometric Optics Review & Wave Nature Introduction",
+      "description": "Review fundamental principles of geometric optics using ray tracing and matrix methods, and introduce the wave nature of light via Huygens' principle.",
+      "topics": ["Fermat's Principle", "Snell's Law", "Thin Lenses", "Lensmaker's Equation", "Matrix Methods in Paraxial Optics", "Huygens' Principle", "Wavefronts"],
+      "questions": [
+        "Derive the thin lens equation using Snell's law approximations or Fermat's principle.",
+        "Calculate the image position and magnification for a two-lens system using ray transfer matrices.",
+        "How does Huygens' principle explain reflection and refraction?"
+      ],
+      "resources": [
+        {"title": "HyperPhysics: Geometric Optics", "url": "http://hyperphysics.phy-astr.gsu.edu/hbase/geoopt/goptoc.html"},
+        {"title": "Matrix Methods in Optics Simulation", "url": "https://physics.weber.edu/schroeder/optics/matrixmethods.html"}
+      ],
+      "equations": [
+        "n1 * sin(θ1) = n2 * sin(θ2) (Snell's Law)",
+        "1/f = (n-1) * (1/R1 - 1/R2) (Lensmaker's Eq.)",
+        "1/so + 1/si = 1/f (Thin Lens Eq.)",
+        "M = [[A, B], [C, D]] (Ray Transfer Matrix)"
+      ],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-2-interference",
+      "parentId": "week-1-geom-wave-intro",
+      "title": "Week 2: Wave Superposition & Interference",
+      "description": "Explore the principle of superposition and its application to interference phenomena, including Young's double-slit experiment and thin films.",
+      "topics": ["Principle of Superposition", "Coherence (Temporal, Spatial)", "Young's Double Slit Experiment", "Path Difference", "Optical Path Length", "Interference in Thin Films", "Michelson Interferometer"],
+      "questions": [
+        "Explain the conditions necessary for observing sustained interference patterns.",
+        "Calculate the fringe spacing for a given double-slit setup.",
+        "Why do thin films (like soap bubbles) show colors?",
+        "Describe how a Michelson interferometer can be used to measure wavelength."
+      ],
+      "resources": [
+        {"title": "PhET Simulation: Wave Interference", "url": "https://phet.colorado.edu/en/simulation/wave-interference"},
+        {"title": "Hecht - Chapter 7 & 9 (Interference)", "url": "Textbook Reference"}
+      ],
+      "equations": [
+        "Δφ = (2π/λ) * Δx (Phase difference from path difference)",
+        "I = I1 + I2 + 2*sqrt(I1*I2)*cos(Δφ) (Superposition Intensity)",
+        "d * sin(θ) = mλ (Constructive Interference - Slits)",
+        "y_m = (mλL)/d (Fringe position on screen)"
+      ],
+      "codeExamples": [
+"import numpy as np\nimport matplotlib.pyplot as plt\n\n# Simulate Young's Double Slit Intensity\nL = 1.0  # screen distance\nd = 0.1e-3 # slit separation\nwavelength = 600e-9 # lambda\nI0 = 1 # intensity from one slit\n\ny_screen = np.linspace(-0.05, 0.05, 500)\ntheta = np.arctan(y_screen / L) # Small angle approx: theta ~ y/L\ndelta_phi = (2 * np.pi / wavelength) * d * np.sin(theta)\nIntensity = 4 * I0 * (np.cos(delta_phi / 2))**2\n\nplt.plot(y_screen * 1000, Intensity)\nplt.title('Young\'s Double Slit Interference Pattern')\nplt.xlabel('Position on screen (mm)')\nplt.ylabel('Intensity')\nplt.show()"
+      ],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-3-diffraction",
+      "parentId": "week-2-interference",
+      "title": "Week 3: Diffraction",
+      "description": "Study the bending of light waves around obstacles, focusing on Fraunhofer diffraction patterns from slits, apertures, and gratings, and the concept of resolution.",
+      "topics": ["Huygens-Fresnel Principle", "Fraunhofer vs Fresnel Diffraction", "Single Slit Diffraction", "Circular Aperture Diffraction (Airy Disk)", "Diffraction Grating", "Resolution", "Rayleigh Criterion"],
+      "questions": [
+        "How does diffraction differ from interference?",
+        "Calculate the positions of the minima in a single-slit diffraction pattern.",
+        "What determines the resolving power of a telescope or microscope?",
+        "Explain how a diffraction grating separates different wavelengths of light."
+      ],
+      "resources": [
+        {"title": "HyperPhysics: Diffraction", "url": "http://hyperphysics.phy-astr.gsu.edu/hbase/phyopt/diffrac.html"},
+         {"title": "Hecht - Chapter 10 (Diffraction)", "url": "Textbook Reference"}
+      ],
+      "equations": [
+        "a * sin(θ) = mλ (Minima for Single Slit, m≠0)",
+        "I(θ) = I0 * [sin(β)/β]^2, where β = (πa/λ)sin(θ) (Single Slit Intensity)",
+        "d * sin(θ) = mλ (Maxima for Grating)",
+        "θ_min ≈ 1.22 * λ / D (Rayleigh Criterion for circular aperture)"
+      ],
+      "codeExamples": [
+"import numpy as np\nimport matplotlib.pyplot as plt\n\n# Simulate Single Slit Diffraction Intensity\na = 0.05e-3 # slit width\nwavelength = 500e-9\nL = 1.0 # screen distance\nI0 = 1\n\ny_screen = np.linspace(-0.04, 0.04, 1000)\ntheta = np.arctan(y_screen / L)\nbeta = (np.pi * a / wavelength) * np.sin(theta)\n\n# Avoid division by zero at beta=0\nIntensity = I0 * (np.sin(beta + 1e-9) / (beta + 1e-9))**2\n\nplt.plot(y_screen * 1000, Intensity)\nplt.title('Single Slit Diffraction Pattern')\nplt.xlabel('Position on screen (mm)')\nplt.ylabel('Intensity')\nplt.show()"
+      ],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-4-polarization",
+      "parentId": "week-3-diffraction",
+      "title": "Week 4: Polarization",
+      "description": "Investigate the transverse nature of light waves and the phenomenon of polarization, including methods of production and manipulation.",
+      "topics": ["Linear, Circular, Elliptical Polarization", "Polarizers (Dichroism)", "Polarization by Reflection (Brewster's Angle)", "Polarization by Scattering", "Malus's Law", "Birefringence", "Wave Plates (Quarter-wave, Half-wave)"],
+      "questions": [
+        "Describe the difference between unpolarized, linearly polarized, and circularly polarized light.",
+        "How does a polarizing filter work?",
+        "Calculate the Brewster's angle for light incident from air onto glass (n=1.5).",
+        "What happens to linearly polarized light passing through a quarter-wave plate at 45 degrees to its fast axis?"
+      ],
+      "resources": [
+        {"title": "HyperPhysics: Polarization", "url": "http://hyperphysics.phy-astr.gsu.edu/hbase/phyopt/polcon.html"},
+        {"title": "Thorlabs: Polarization Tutorial", "url": "https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=77"},
+        {"title": "Hecht - Chapter 8 (Polarization)", "url": "Textbook Reference"}
+      ],
+      "equations": [
+        "I = I0 * cos^2(θ) (Malus's Law)",
+        "tan(θ_B) = n2 / n1 (Brewster's Angle)",
+        "Phase retardation (Wave Plate) Γ = (2π/λ)*(ne - no)*d "
+      ],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-5-fourier-optics-intro",
+      "parentId": "week-4-polarization",
+      "title": "Week 5: Introduction to Fourier Optics",
+      "description": "Introduce the powerful concept of using Fourier analysis to understand diffraction, image formation, and optical information processing.",
+      "topics": ["Fourier Transform Basics", "Spatial Frequency", "Diffraction as a Fourier Transform", "Fourier Transforming Property of a Lens", "Abbe Theory of Image Formation", "Spatial Filtering Concepts"],
+      "questions": [
+        "What is the physical meaning of spatial frequency?",
+        "Explain qualitatively how a lens can perform a Fourier transform.",
+        "How does spatial filtering work in an optical system?",
+        "Relate the resolution limit (Rayleigh criterion) to the concept of spatial frequencies."
+      ],
+      "resources": [
+        {"title": "Goodman - Introduction to Fourier Optics (Textbook)", "url": "https://www.spiedigitallibrary.org/ebooks/FG/Introduction-to-Fourier-Optics/eFG15"},
+        {"title": "Lectures on Fourier Optics (e.g., YouTube search)", "url": "https://www.youtube.com/"}
+      ],
+      "equations": [
+        "U(fx, fy) = FT{u(x, y)} (Fourier Transform Relation)",
+        "u_f(x, y) ∝ FT{t_A(x'/λf, y'/λf)} (FT property of lens, relating aperture transmission t_A to focal plane field u_f)"
+      ],
+      "codeExamples": [
+"import numpy as np\nimport matplotlib.pyplot as plt\nfrom numpy.fft import fft2, fftshift\n\n# Simulate FT of a circular aperture\nN = 512\nx = np.linspace(-1, 1, N)\ny = np.linspace(-1, 1, N)\nX, Y = np.meshgrid(x, y)\nradius = 0.1\naperture = X**2 + Y**2 < radius**2\n\nft_aperture = fftshift(fft2(aperture))\nintensity_pattern = np.abs(ft_aperture)**2\n\nplt.figure(figsize=(10, 5))\nplt.subplot(1, 2, 1)\nplt.imshow(aperture, cmap='gray')\nplt.title('Circular Aperture')\n\nplt.subplot(1, 2, 2)\n# Display logarithm for better visualization\nplt.imshow(np.log(intensity_pattern + 1e-6), cmap='hot') \nplt.title('Fourier Transform (Intensity - Log Scale)')\nplt.show()"
+      ],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-6-lasers-fibers",
+      "parentId": "week-5-fourier-optics-intro",
+      "title": "Week 6: Lasers and Fiber Optics Basics",
+      "description": "Explore the principles behind laser operation and the fundamentals of light propagation in optical fibers.",
+      "topics": ["Stimulated Emission", "Population Inversion", "Optical Resonators", "Laser Gain", "Basic Laser Types (HeNe, Diode)", "Gaussian Beams (Introduction)", "Total Internal Reflection (TIR)", "Optical Fibers", "Numerical Aperture (NA)", "Modes in Fibers", "Attenuation"],
+      "questions": [
+        "What are the three main processes involved in light-matter interaction relevant to lasers?",
+        "Explain the role of the resonant cavity in a laser.",
+        "What is population inversion and why is it necessary for lasing?",
+        "How does light propagate along an optical fiber?",
+        "Define Numerical Aperture and explain its significance."
+      ],
+      "resources": [
+        {"title": "HyperPhysics: Lasers", "url": "http://hyperphysics.phy-astr.gsu.edu/hbase/optmod/lascon.html"},
+        {"title": "RP Photonics Encyclopedia", "url": "https://www.rp-photonics.com/encyclopedia.html"},
+        {"title": "Hecht - Chapters 13 (Lasers) & related fiber optics sections", "url": "Textbook Reference"}
+      ],
+      "equations": [
+        "Gain > Loss (Lasing Threshold Condition)",
+        "w(z) = w0 * sqrt(1 + (z/zR)^2) (Gaussian beam spot size)",
+        "θ(z) ≈ λ / (π * w0) (Gaussian beam divergence - far field)",
+        "NA = sqrt(n_core^2 - n_cladding^2) = n_in * sin(θ_max) (Numerical Aperture)"
+      ],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    },
+    {
+      "id": "week-7-applications-review",
+      "parentId": "week-6-lasers-fibers",
+      "title": "Week 7: Optical Systems and Applications",
+      "description": "Revisit optical instruments with wave optics considerations and explore applications like holography. Consolidate understanding of interference, diffraction, and polarization effects in systems.",
+      "topics": ["Microscope Resolution Revisited (Abbe Limit)", "Telescope Resolution", "Interferometry Applications (Metrology, Spectroscopy)", "Holography Principles", "Brief Intro to Nonlinear Optics Concepts (Frequency Doubling)", "System-level examples"],
+      "questions": [
+        "How does diffraction limit the resolution of a microscope?",
+        "Explain the basic principle behind recording and reconstructing a hologram.",
+        "Describe one practical application of interferometry.",
+        "How do the concepts learned (interference, diffraction, polarization) influence the design of optical instruments?"
+      ],
+      "resources": [
+        {"title": "Review previous weeks' materials", "url": "#"},
+        {"title": "Hecht - Relevant application chapters/sections", "url": "Textbook Reference"}
+      ],
+      "equations": [
+        "Resolution ≈ 0.61 * λ / NA (Microscope resolution)",
+        "Holography recording/reconstruction equations (conceptual understanding)"
+      ],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    },
+     {
+      "id": "week-8-consolidation",
+      "parentId": "week-7-applications-review",
+      "title": "Week 8: Consolidation and Further Study",
+      "description": "Review key concepts across the entire pathway. Solve integrated problems. Identify areas for further study in advanced optics.",
+      "topics": ["Review of Wave Phenomena", "Review of Polarization", "Review of Fourier Optics", "Integrated Problem Solving", "Topics for Advanced Study (Nonlinear Optics, Quantum Optics, Statistical Optics, Advanced Microscopy)"],
+      "questions": [
+        "Consider light passing through a polarizer, then a half-wave plate, then another polarizer. Calculate the final intensity.",
+        "Relate the spatial frequency content of an object to the resolution limit of an imaging system.",
+        "Design a simple Michelson interferometer setup to measure the refractive index change in a gas cell."
+        ],
+      "resources": [
+        {"title": "SPIE - Optics Education Resources", "url": "https://spie.org/education"},
+        {"title": "Optica (formerly OSA) - Education Resources", "url": "https://www.optica.org/en-us/education_resources/"}
+      ],
+      "equations": [
+        "Review of key equations from Weeks 1-7"
+        ],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    }
+  ],
+  "edges": [
+    {"id": "edge-main-1", "source": "optics-main", "target": "week-1-geom-wave-intro", "label": "Starts with", "animated": false},
+    {"id": "edge-1-2", "source": "week-1-geom-wave-intro", "target": "week-2-interference", "label": "Leads to", "animated": true},
+    {"id": "edge-2-3", "source": "week-2-interference", "target": "week-3-diffraction", "label": "Leads to", "animated": true},
+    {"id": "edge-3-4", "source": "week-3-diffraction", "target": "week-4-polarization", "label": "Leads to", "animated": true},
+    {"id": "edge-4-5", "source": "week-4-polarization", "target": "week-5-fourier-optics-intro", "label": "Leads to", "animated": true},
+    {"id": "edge-5-6", "source": "week-5-fourier-optics-intro", "target": "week-6-lasers-fibers", "label": "Leads to", "animated": true},
+    {"id": "edge-6-7", "source": "week-6-lasers-fibers", "target": "week-7-applications-review", "label": "Leads to", "animated": true},
+     {"id": "edge-7-8", "source": "week-7-applications-review", "target": "week-8-consolidation", "label": "Leads to", "animated": true}
+  ]
+}
+```
+Attempting to extract and fix JSON from content...
+Standard JSON parsing failed: Bad escaped character in JSON at position 4264
+Attempting JSON repair...
+Extracted potential JSON object from index 0 to 15657
+Extracted object parsing failed: Bad escaped character in JSON at position 4264
+First fix attempt failed, trying advanced repair...
+Attempting to complete truncated JSON...
+Final JSON completion attempt failed: Expected ',' or '}' after property value in JSON at position 602
+Using minimal fallback JSON structure
+8:51:37 AM [express] POST /api/generate 201 in 105081ms :: {"pathway":{"title":"Learning Pathway","t…
+8:51:37 AM [express] GET /api/pathways 200 in 1ms :: [{"title":"Intermediate Optics Learning Pathway…

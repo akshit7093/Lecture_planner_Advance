@@ -12,6 +12,31 @@ import {
   type Node as DbNode
 } from "@shared/schema";
 
+// Helper function to sanitize specific fields in node data for JSON
+function sanitizeNodeData(node: any): any {
+  if (!node) return node;
+  
+  // Make a deep copy to avoid modifying the original
+  const sanitized = {...node};
+  
+  // Sanitize code examples
+  if (sanitized.codeExamples && Array.isArray(sanitized.codeExamples)) {
+    sanitized.codeExamples = sanitized.codeExamples.map((code: string) => {
+      return code.replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\t/g, '    ')
+        .replace(/\r/g, '');
+    });
+  }
+  
+  // Sanitize other fields that might have special characters
+  if (sanitized.description) {
+    sanitized.description = sanitized.description.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+  
+  return sanitized;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // API routes for pathways
   app.get('/api/pathways', async (req, res) => {
@@ -357,7 +382,10 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
                   .replace(/[\n\r]/g, ' ')                   // Remove newlines
                   .replace(/,(\s*[\}\]])/g, '$1')            // Remove trailing commas
                   .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure property names have double quotes
-                  .replace(/\'/g, '"');                      // Replace single quotes with double quotes
+                  .replace(/\'/g, '"')                      // Replace single quotes with double quotes
+                  .replace(/\\\\/g, '\\')                   // Fix double-escaped backslashes
+                  .replace(/\\"/g, '"')                    // Fix escaped quotes in code examples
+                  .replace(/\t/g, '    ');                 // Replace tabs with spaces
                 
                 try {
                   jsonContent = JSON.parse(fixedText);
@@ -554,19 +582,22 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
       // Create all nodes
       const createdNodes = [];
       for (const nodeData of jsonContent.nodes) {
+        // Sanitize the node data before inserting into database
+        const sanitizedNode = sanitizeNodeData(nodeData);
+        
         const node = await storage.createNode({
           pathwayId: pathway.id,
-          nodeId: nodeData.id,
-          parentId: nodeData.parentId,
-          title: nodeData.title,
-          description: nodeData.description || "",
-          position: nodeData.position || { x: 0, y: 0 },
+          nodeId: sanitizedNode.id,
+          parentId: sanitizedNode.parentId,
+          title: sanitizedNode.title,
+          description: sanitizedNode.description || "",
+          position: sanitizedNode.position || { x: 0, y: 0 },
           nodeType: "default",
-          topics: nodeData.topics || [],
-          questions: nodeData.questions || [],
-          resources: nodeData.resources || [],
-          equations: nodeData.equations || [],
-          codeExamples: nodeData.codeExamples || [],
+          topics: sanitizedNode.topics || [],
+          questions: sanitizedNode.questions || [],
+          resources: sanitizedNode.resources || [],
+          equations: sanitizedNode.equations || [],
+          codeExamples: sanitizedNode.codeExamples || [],
           metadata: {}
         });
         createdNodes.push(node);
@@ -744,7 +775,10 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
                 .replace(/[\n\r]/g, ' ')                   // Remove newlines
                 .replace(/,(\s*[\}\]])/g, '$1')            // Remove trailing commas
                 .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')  // Ensure property names have double quotes
-                .replace(/\'/g, '"');                      // Replace single quotes with double quotes
+                .replace(/\'/g, '"')                       // Replace single quotes with double quotes
+                .replace(/\\\\/g, '\\')                    // Fix double-escaped backslashes
+                .replace(/\\"/g, '"')                      // Fix escaped quotes in code examples
+                .replace(/\t/g, '    ');                   // Replace tabs with spaces
               
               enhancementContent = JSON.parse(fixedText);
               console.log("Successfully parsed fixed resources JSON");
@@ -788,7 +822,14 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
           let match;
           
           while ((match = codeBlockRegex.exec(content)) !== null) {
-            codeBlocks.push(match[1].trim());
+            // Clean up code blocks to prevent them from breaking JSON later
+            const cleanCode = match[1].trim()
+              .replace(/\\/g, '\\\\')     // Escape backslashes properly for JSON
+              .replace(/"/g, '\\"')       // Escape double quotes for JSON
+              .replace(/\t/g, '    ')     // Replace tabs with spaces
+              .replace(/\r/g, '');        // Remove carriage returns
+              
+            codeBlocks.push(cleanCode);
           }
           
           if (codeBlocks.length > 0) {
@@ -798,7 +839,14 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
             // Fall back to line-by-line for code if no code blocks
             enhancementContent = content.split('\n\n')
               .filter((block: string) => block.trim().length > 0)
-              .map((block: string) => block.trim());
+              .map((block: string) => {
+                // Clean up code blocks
+                return block.trim()
+                  .replace(/\\/g, '\\\\')
+                  .replace(/"/g, '\\"')
+                  .replace(/\t/g, '    ')
+                  .replace(/\r/g, '');
+              });
             
             console.log(`Extracted ${enhancementContent.length} code examples by paragraph`);
           }
