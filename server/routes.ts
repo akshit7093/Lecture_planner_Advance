@@ -289,11 +289,25 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
           });
           
           // If we get here, the request succeeded, so break out of the loop
-          console.log(`Successfully used model: ${model}`);
+          console.log(`Successfully used model: ${model}`, {
+            model, 
+            statusCode: response.status,
+            responseSize: JSON.stringify(response.data).length
+          });
           break;
         } catch (e: any) {
           error = e;
-          console.error(`Failed to use model ${model}:`, e.response?.data || e.message);
+          console.error(`Failed to use model ${model}:`, {
+            model,
+            errorStatus: e.response?.status,
+            errorData: e.response?.data || e.message,
+            requestData: { 
+              model, 
+              messageLength: prompt.length,
+              attempt: models.indexOf(model) + 1,
+              totalModels: models.length
+            }
+          });
           // If this is the last model, re-throw the error
           if (model === models[models.length - 1]) {
             throw e;
@@ -489,11 +503,30 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
           });
           
           // If we get here, the request succeeded, so break out of the loop
-          console.log(`Successfully used model for node enhancement: ${model}`);
+          console.log(`Successfully used model for node enhancement: ${model}`, {
+            model,
+            enhanceType,
+            nodeId,
+            title: nodeData.title,
+            statusCode: response.status,
+            responseSize: JSON.stringify(response.data).length
+          });
           break;
         } catch (e: any) {
           error = e;
-          console.error(`Failed to use model ${model} for node enhancement:`, e.response?.data || e.message);
+          console.error(`Failed to use model ${model} for node enhancement:`, {
+            model,
+            enhanceType,
+            nodeId,
+            errorStatus: e.response?.status,
+            errorData: e.response?.data || e.message,
+            requestData: { 
+              model, 
+              messageLength: prompt.length,
+              attempt: models.indexOf(model) + 1,
+              totalModels: models.length
+            }
+          });
           // If this is the last model, re-throw the error
           if (model === models[models.length - 1]) {
             throw e;
