@@ -271,7 +271,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
             content: prompt 
           }
         ],
-        max_tokens: 4000
+        max_tokens: 6000
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -381,11 +381,79 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
                       if (lastNodeStart > lastBracePos) {
                         console.log("Found truncated node at position:", lastNodeStart);
                         
-                        // Complete the node and the overall structure
-                        fixedText = fixedText.substring(0, lastCommaPos) + 
-                                   '}], "edges": [] }';
+                        // Check for unfinished arrays within the node (questions, resources, etc.)
+                        const questionsStart = fixedText.lastIndexOf('"questions":');
+                        const topicsStart = fixedText.lastIndexOf('"topics":');
+                        const resourcesStart = fixedText.lastIndexOf('"resources":');
+                        const equationsStart = fixedText.lastIndexOf('"equations":');
+                        const codeStart = fixedText.lastIndexOf('"codeExamples":');
                         
-                        console.log("Completed truncated JSON structure");
+                        let modifiedText = fixedText;
+                        
+                        // Find the most recent array opening that doesn't have a closing bracket
+                        const lastArrayOpening = Math.max(
+                          questionsStart > fixedText.lastIndexOf(']', lastNodeStart) ? questionsStart : -1,
+                          topicsStart > fixedText.lastIndexOf(']', lastNodeStart) ? topicsStart : -1,
+                          resourcesStart > fixedText.lastIndexOf(']', lastNodeStart) ? resourcesStart : -1,
+                          equationsStart > fixedText.lastIndexOf(']', lastNodeStart) ? equationsStart : -1,
+                          codeStart > fixedText.lastIndexOf(']', lastNodeStart) ? codeStart : -1
+                        );
+                        
+                        if (lastArrayOpening > -1) {
+                          // We found an unclosed array, determine where to close it
+                          const arrayTypeEnd = fixedText.indexOf('[', lastArrayOpening);
+                          const arrayType = fixedText.substring(lastArrayOpening + 1, arrayTypeEnd).trim().replace(/[":]/g, '');
+                          
+                          console.log(`Found unclosed ${arrayType} array at position:`, lastArrayOpening);
+                          
+                          // Identify a comma after the array start (indicating at least one item exists)
+                          const commaAfterArray = fixedText.indexOf(',', arrayTypeEnd);
+                          
+                          if (commaAfterArray > arrayTypeEnd) {
+                            // Complete the array
+                            let cutoffPoint = commaAfterArray;
+                            
+                            // Look for the last complete string in the array (ending with quote)
+                            const lastQuotePos = fixedText.lastIndexOf('"', lastCommaPos);
+                            if (lastQuotePos > arrayTypeEnd) {
+                              // Find the comma after the complete string
+                              const commaAfterQuote = fixedText.indexOf(',', lastQuotePos);
+                              if (commaAfterQuote > 0 && commaAfterQuote < lastCommaPos) {
+                                cutoffPoint = commaAfterQuote;
+                              } else {
+                                // If no comma after quote, find the object closing if it's a resource
+                                if (arrayType === 'resources') {
+                                  const closeBracePos = fixedText.lastIndexOf('}', lastCommaPos);
+                                  if (closeBracePos > arrayTypeEnd) {
+                                    cutoffPoint = closeBracePos + 1;
+                                  }
+                                } else {
+                                  cutoffPoint = lastQuotePos + 1;
+                                }
+                              }
+                            }
+                            
+                            // Build the fixed text by closing the array, then the node, and adding edges
+                            modifiedText = fixedText.substring(0, cutoffPoint) + 
+                                         '], "position": {"x": 0, "y": 0}}], "edges": [] }';
+                            
+                            console.log(`Completed truncated ${arrayType} array and JSON structure`);
+                          } else {
+                            // No items in array, just close it
+                            modifiedText = fixedText.substring(0, arrayTypeEnd + 1) + 
+                                         '], "position": {"x": 0, "y": 0}}], "edges": [] }';
+                            
+                            console.log(`Completed empty ${arrayType} array and JSON structure`);
+                          }
+                        } else {
+                          // No arrays found, complete the node and the overall structure
+                          modifiedText = fixedText.substring(0, lastCommaPos) + 
+                                       '}], "edges": [] }';
+                          
+                          console.log("Completed truncated node and JSON structure");
+                        }
+                        
+                        fixedText = modifiedText;
                       } else if (fixedText.lastIndexOf('"nodes": [') > fixedText.lastIndexOf(']')) {
                         // We have nodes tag but no closing bracket
                         fixedText = fixedText + '],"edges":[]}';
@@ -595,7 +663,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
             content: prompt 
           }
         ],
-        max_tokens: 1000
+        max_tokens: 2000
       }, {
         headers: {
           'Content-Type': 'application/json',
