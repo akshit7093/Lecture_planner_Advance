@@ -7,6 +7,7 @@ import {
   CustomEdge
 } from "@/types";
 import { Edge, Node } from "@shared/schema";
+import { MarkerType, EdgeMarker } from "reactflow";
 
 // Pathways API
 export const fetchPathways = async () => {
@@ -90,7 +91,7 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
     data: {
       id: node.id,
       label: node.title,
-      description: node.description,
+      description: node.description || undefined,
       topics: node.topics as string[] | undefined,
       questions: node.questions as string[] | undefined,
       resources: node.resources as { title: string, url: string }[] | undefined,
@@ -112,11 +113,11 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
       label: edge.label || undefined,
     },
     markerEnd: {
-      type: 'arrowclosed',
+      type: MarkerType.ArrowClosed,
       width: 20,
       height: 20,
       color: '#718096',
-    },
+    } as EdgeMarker,
     style: {
       stroke: '#718096',
     },
@@ -128,15 +129,15 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
 // Auto layout the nodes in a horizontal hierarchical tree
 export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
   // First, build a tree structure
-  const nodeMap = new Map<string, { node: CustomNode; children: CustomNode[] }>();
+  const nodeMap = new Map<string, { node: CustomNode; children: CustomNode[]; level: number; processed: boolean }>();
   
   // Initialize the map with all nodes
   nodes.forEach(node => {
-    nodeMap.set(node.id, { node, children: [] });
+    nodeMap.set(node.id, { node, children: [], level: 0, processed: false });
   });
   
   // Find root nodes (nodes without parents)
-  let rootNodes: CustomNode[] = [...nodeMap.values()]
+  let rootNodes: CustomNode[] = Array.from(nodeMap.values())
     .map(item => item.node)
     .filter(node => {
       // A node is a root if no edge has it as a target
@@ -148,83 +149,146 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     rootNodes = [nodes[0]];
   }
   
-  // Build the tree by associating children with parents
-  edges.forEach(edge => {
-    const sourceItem = nodeMap.get(edge.source);
-    const targetNode = nodes.find(n => n.id === edge.target);
+  // First pass: calculate the level (depth) for each node using BFS
+  const queue: { nodeId: string; level: number }[] = rootNodes.map(node => ({ nodeId: node.id, level: 0 }));
+  
+  while (queue.length > 0) {
+    const { nodeId, level } = queue.shift()!;
+    const item = nodeMap.get(nodeId);
     
-    if (sourceItem && targetNode) {
-      sourceItem.children.push(targetNode);
+    if (item && !item.processed) {
+      item.level = level;
+      item.processed = true;
+      
+      // Find all children of this node (where this node is the source)
+      edges.forEach(edge => {
+        if (edge.source === nodeId) {
+          const targetNode = nodes.find(n => n.id === edge.target);
+          
+          if (targetNode) {
+            const targetItem = nodeMap.get(edge.target);
+            if (targetItem) {
+              // Only push as a child if not already processed or if the new level is deeper
+              if (!targetItem.processed || level + 1 > targetItem.level) {
+                item.children.push(targetNode);
+                queue.push({ nodeId: edge.target, level: level + 1 });
+              }
+            }
+          }
+        }
+      });
     }
+  }
+  
+  // Reset processed flag for the next phase
+  Array.from(nodeMap.values()).forEach(item => {
+    item.processed = false;
   });
   
-  // Recursively position nodes with increased spacing for better readability
-  const HORIZONTAL_SPACING = 350; // Increased from 250
-  const VERTICAL_SPACING = 200;   // Increased from 150
+  // Group nodes by level for hierarchical layout
+  const nodesByLevel: Map<number, CustomNode[]> = new Map();
+  Array.from(nodeMap.values()).forEach(item => {
+    const level = item.level;
+    if (!nodesByLevel.has(level)) {
+      nodesByLevel.set(level, []);
+    }
+    nodesByLevel.get(level)!.push(item.node);
+  });
   
-  const positionNode = (
-    nodeId: string, 
-    level: number, 
-    verticalPosition: number,
-    processedNodes: Set<string>
-  ): { verticalSize: number } => {
-    if (processedNodes.has(nodeId)) return { verticalSize: 0 };
-    processedNodes.add(nodeId);
+  // Constants for spacing
+  const HORIZONTAL_SPACING = 450; // Increased for more space between columns
+  const VERTICAL_SPACING = 250;   // Increased for more space between rows
+  const NODE_HEIGHT = 150;        // Approximate height of a node
+  
+  // Position nodes level by level (horizontal tree layout)
+  const maxLevel = Math.max(...Array.from(nodesByLevel.keys()));
+  
+  for (let level = 0; level <= maxLevel; level++) {
+    const levelNodes = nodesByLevel.get(level) || [];
     
-    const item = nodeMap.get(nodeId);
-    if (!item) return { verticalSize: 0 };
+    // Sort nodes within each level based on connections to previous level
+    if (level > 0) {
+      levelNodes.sort((a, b) => {
+        // Find parent indices in previous level
+        const aParentIndices: number[] = [];
+        const bParentIndices: number[] = [];
+        
+        edges.forEach(edge => {
+          if (edge.target === a.id) {
+            const parentNode = nodes.find(n => n.id === edge.source);
+            if (parentNode) {
+              const parentItem = nodeMap.get(edge.source);
+              if (parentItem && parentItem.level === level - 1) {
+                const parentIndex = nodesByLevel.get(level - 1)?.findIndex(n => n.id === edge.source) || 0;
+                aParentIndices.push(parentIndex);
+              }
+            }
+          }
+          if (edge.target === b.id) {
+            const parentNode = nodes.find(n => n.id === edge.source);
+            if (parentNode) {
+              const parentItem = nodeMap.get(edge.source);
+              if (parentItem && parentItem.level === level - 1) {
+                const parentIndex = nodesByLevel.get(level - 1)?.findIndex(n => n.id === edge.source) || 0;
+                bParentIndices.push(parentIndex);
+              }
+            }
+          }
+        });
+        
+        // Compare based on average parent position
+        const aAvg = aParentIndices.length ? aParentIndices.reduce((sum, idx) => sum + idx, 0) / aParentIndices.length : 0;
+        const bAvg = bParentIndices.length ? bParentIndices.reduce((sum, idx) => sum + idx, 0) / bParentIndices.length : 0;
+        
+        return aAvg - bAvg;
+      });
+    }
     
-    const { node, children } = item;
+    // Position nodes in this level
+    const levelHeight = levelNodes.length * VERTICAL_SPACING;
+    let startY = -levelHeight / 2; // Center vertically
     
-    // Position the current node
-    node.position = {
-      x: level * HORIZONTAL_SPACING,
-      y: verticalPosition
-    };
-    
-    // Position children
-    let currentY = verticalPosition;
-    let totalVerticalSize = 0;
-    
-    children.forEach(childNode => {
-      const { verticalSize } = positionNode(
-        childNode.id, 
-        level + 1, 
-        currentY,
-        processedNodes
-      );
+    levelNodes.forEach((node, index) => {
+      // Position with even vertical spacing
+      node.position = {
+        x: level * HORIZONTAL_SPACING,
+        y: startY + index * VERTICAL_SPACING
+      };
       
-      currentY += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
-      totalVerticalSize += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
+      // Check for node overlap and adjust if needed
+      for (let i = 0; i < index; i++) {
+        const prevNode = levelNodes[i];
+        const verticalDistance = Math.abs(node.position.y - prevNode.position.y);
+        
+        if (verticalDistance < NODE_HEIGHT) {
+          // Move current node down to avoid overlap
+          node.position.y += (NODE_HEIGHT - verticalDistance) + 20; // Add extra padding
+        }
+      }
+    });
+  }
+  
+  // Center the entire graph
+  if (nodes.length > 0) {
+    // Calculate bounding box
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    nodes.forEach(node => {
+      minX = Math.min(minX, node.position.x);
+      minY = Math.min(minY, node.position.y);
+      maxX = Math.max(maxX, node.position.x);
+      maxY = Math.max(maxY, node.position.y);
     });
     
-    // If no children, return single node height
-    if (children.length === 0) {
-      return { verticalSize: VERTICAL_SPACING };
-    }
+    // Center horizontally
+    const offsetX = -minX;
     
-    return { verticalSize: totalVerticalSize };
-  };
-  
-  // Position all root nodes and their descendants
-  const processedNodes = new Set<string>();
-  let currentY = 50;
-  
-  rootNodes.forEach(rootNode => {
-    const { verticalSize } = positionNode(rootNode.id, 0, currentY, processedNodes);
-    currentY += verticalSize > 0 ? verticalSize + VERTICAL_SPACING : VERTICAL_SPACING * 2;
-  });
-  
-  // Handle any remaining unprocessed nodes (in case of disconnected components)
-  nodes.forEach(node => {
-    if (!processedNodes.has(node.id)) {
-      node.position = {
-        x: 0,
-        y: currentY
-      };
-      currentY += VERTICAL_SPACING;
-    }
-  });
+    // Apply offset
+    nodes.forEach(node => {
+      node.position.x += offsetX;
+      node.position.y += Math.abs(minY) + 100; // Add top margin
+    });
+  }
   
   return nodes;
 };
