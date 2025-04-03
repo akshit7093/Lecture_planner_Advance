@@ -14,7 +14,6 @@ import ReactFlow, {
   Panel,
   ConnectionMode,
   EdgeMarker,
-  ConnectionLineType,
 } from 'reactflow';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -192,16 +191,13 @@ const FlowCanvas = ({
       id: `edge-${connection.source}-${connection.target}`,
       type: 'smoothstep',
       animated: false,
-      style: { 
-        stroke: '#718096',
-        strokeWidth: 2
-      },
+      style: { stroke: '#718096' },
       markerEnd: {
         type: MarkerType.ArrowClosed,
         width: 20,
         height: 20,
         color: '#718096',
-      } as any
+      } as any,
     };
     setEdges((eds) => addEdge(newEdge, eds) as unknown as CustomEdge[]);
   }, []);
@@ -275,18 +271,14 @@ const FlowCanvas = ({
         connectionMode={connectionMode as any}
         defaultEdgeOptions={{
           type: 'smoothstep',
-          style: { 
-            stroke: '#718096', 
-            strokeWidth: 2
-          },
+          style: { stroke: '#718096' },
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 20,
             height: 20,
             color: '#718096',
-          } as any
+          } as any,
         }}
-        connectionLineType={ConnectionLineType.SmoothStep}
         proOptions={{ hideAttribution: true }}
         nodesDraggable={true}
         zoomOnScroll={true}
