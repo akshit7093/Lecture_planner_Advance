@@ -1,0 +1,58 @@
+react-dom.development.js:86 
+ Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?
+
+Check the render method of `SlotClone`.
+    at Badge (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/components/ui/badge.tsx:35:18)
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4WIT4MX7.js?v=5c569ff2:52:11
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4WIT4MX7.js?v=5c569ff2:33:11
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-AYSQM7VZ.js?v=5c569ff2:41:13
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4WIT4MX7.js?v=5c569ff2:52:11
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4WIT4MX7.js?v=5c569ff2:33:11
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-AYSQM7VZ.js?v=5c569ff2:41:13
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…ner/workspace/node_modules/.vite/deps/chunk-AEGELH4A.js?v=5c569ff2:2014:13
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…space/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=5c569ff2:184:13
+    at Provider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4RVVHOT3.js?v=5c569ff2:48:15)
+    at Provider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…ner/workspace/node_modules/.vite/deps/chunk-AEGELH4A.js?v=5c569ff2:1912:15)
+    at Popper (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…ner/workspace/node_modules/.vite/deps/chunk-AEGELH4A.js?v=5c569ff2:2006:11)
+    at Tooltip (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…kspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=5c569ff2:102:5)
+    at Provider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4RVVHOT3.js?v=5c569ff2:48:15)
+    at TooltipProvider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=5c569ff2:58:5)
+    at div
+    at div
+    at div
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-AYSQM7VZ.js?v=5c569ff2:41:13
+    at Provider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…unner/workspace/node_modules/.vite/deps/chunk-4RVVHOT3.js?v=5c569ff2:48:15)
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…ace/node_modules/.vite/deps/@radix-ui_react-collapsible.js?v=5c569ff2:40:7
+    at div
+    at _c9 (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at NodeComponent (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/components/Node.tsx:89:3)
+    at div
+    at NodeWrapper (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:6204:30)
+    at div
+    at NodeRenderer (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:6460:115)
+    at div
+    at Viewport (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:6921:31)
+    at div
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:5692:39
+    at div
+    at ZoomPane (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:5319:19)
+    at FlowRenderer (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:6397:33)
+    at GraphView (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:7037:20)
+    at Wrapper (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:7338:28)
+    at div
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:7369:50
+    at div
+    at FlowCanvas (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/components/FlowCanvas.tsx:42:10)
+    at ReactFlowProvider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=5c569ff2:7330:38)
+    at div
+    at div
+    at Dashboard (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/pages/Dashboard.tsx:28:53)
+    at Route (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5c569ff2:191:16)
+    at Switch (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=5c569ff2:247:17)
+    at Suspense
+    at Router
+    at App
+    at QueryClientProvider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=5c569ff2:2805:3)

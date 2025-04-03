@@ -7,7 +7,7 @@ export const API_CONFIG = {
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
   
   // Model to use for AI-powered content generation
-  MODEL_NAME: process.env.MODEL_NAME || 'google/gemini-2.5-pro-exp-03-25:free',
+  MODEL_NAME: process.env.MODEL_NAME || 'meta-llama/llama-3.2-3b-instruct:free',
   
   // Base URL for OpenRouter API
   OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1/chat/completions'
