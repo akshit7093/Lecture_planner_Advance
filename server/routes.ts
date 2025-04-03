@@ -242,8 +242,732 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // OpenRouter API integration for AI content generation
-  // OpenRouter API integration for AI content generation
+  // OpenRouter API integration for AI content generation using form-based approach
+  // Step 1: Plan the learning pathway structure
+  app.post("/api/plan-pathway", async (req, res) => {
+    try {
+      // Validate request data
+      const validated = openRouterRequestSchema.parse(req.body);
+
+      // Prepare the prompt for planning
+      let timeDescription;
+      if (validated.timespan === "custom" && validated.customDays) {
+        timeDescription = `${validated.customDays} days`;
+      } else {
+        timeDescription = validated.timespan;
+      }
+
+      const planningPrompt = `Create a learning pathway plan for "${validated.topic}" with ${timeDescription} timespan at ${validated.complexity} level.
+      
+Please provide an outline of the learning pathway with the following information:
+1. A title for the overall learning pathway
+2. A list of main topic areas (units) that should be covered
+3. For each main topic area, list 2-4 subtopics that should be included
+4. Suggest a logical sequence for these topics (what depends on what)
+5. Identify any topics that should be in separate trees because they are distinct subject areas
+
+Your response should be in a clearly structured format that's easy to parse programmatically. DO NOT provide any JSON, just plain text with clear sections.
+`;
+
+      // Check API configuration
+      const { MODEL_NAME, OPENROUTER_API_KEY, OPENROUTER_BASE_URL } = config.api;
+
+      console.log(`Attempting to use model for pathway planning: ${MODEL_NAME}`);
+      const start = Date.now();
+
+      if (!OPENROUTER_API_KEY) {
+        console.warn("OpenRouter API key is missing. Please set it in your .env file.");
+        return res.status(400).json({
+          message: "API key is required. Please set OPENROUTER_API_KEY in your .env file.",
+        });
+      }
+
+      // Call the API
+      const response = await axios.post(
+        OPENROUTER_BASE_URL,
+        {
+          model: MODEL_NAME,
+          messages: [
+            {
+              role: "user",
+              content: planningPrompt,
+            },
+          ],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          },
+        },
+      );
+
+      const duration = Date.now() - start;
+      console.log(`Successfully used model for pathway planning: ${MODEL_NAME}`, {
+        statusCode: response.status,
+        responseSize: JSON.stringify(response.data).length,
+        duration: `${duration}ms`,
+      });
+
+      // Process the API response
+      const aiResponse = response.data;
+
+      // Validate response structure
+      if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
+        console.error("Unexpected API response structure:", aiResponse);
+        return res.status(500).json({
+          message: "Unexpected API response structure",
+          aiResponse: aiResponse,
+        });
+      }
+
+      const planContent = aiResponse.choices[0].message.content;
+      
+      // Return the planning content to the client
+      return res.status(200).json({
+        plan: planContent,
+        topic: validated.topic,
+        timespan: validated.timespan,
+        customDays: validated.customDays,
+        complexity: validated.complexity
+      });
+      
+    } catch (error) {
+      console.error("Error generating pathway plan:", error);
+      return res.status(500).json({
+        message: "Failed to generate pathway plan",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  // Step 2: Generate a node with the form-based approach
+  app.post("/api/generate-node", async (req, res) => {
+    try {
+      // Validate request data
+      const { nodeType, title, description, parentNodeId, pathwayPlan, nodeIndex } = req.body;
+      
+      if (!nodeType || !title || !pathwayPlan) {
+        return res.status(400).json({
+          message: "Missing required fields: nodeType, title, and pathwayPlan are required"
+        });
+      }
+      
+      // Prepare the prompt based on the node type
+      let nodePrompt = `Create content for a learning node with the title "${title}"`;
+      
+      if (description) {
+        nodePrompt += ` and description "${description}"`;
+      }
+      
+      nodePrompt += `. This node is of type "${nodeType}" (e.g., root node, subtopic, etc.).`;
+      
+      if (parentNodeId) {
+        nodePrompt += ` This node is a child of node ${parentNodeId}.`;
+      }
+      
+      nodePrompt += `\n\nHere is the overall learning pathway plan for context:\n${pathwayPlan}\n\n`;
+      
+      nodePrompt += `
+Please provide the following information for this node:
+1. Key Topics: List 3-6 key topics that should be covered in this node (return as a simple array of strings)
+2. Questions: Provide 2-4 relevant practice or assessment questions for this node (return as a simple array of strings)
+3. Resources: Suggest 2-3 high-quality learning resources (with titles and URLs) for further learning (return as an array of objects with 'title' and 'url' properties)
+4. Equations: If relevant, provide important mathematical equations for this topic (return as an array of strings or empty array if not applicable)
+5. Code Examples: If relevant, provide useful code examples for this topic (return as an array of strings or empty array if not applicable)
+
+Format your response as clearly labeled sections that I can easily parse. DO NOT use JSON formatting.`;
+
+      // Check API configuration
+      const { MODEL_NAME, OPENROUTER_API_KEY, OPENROUTER_BASE_URL } = config.api;
+
+      console.log(`Attempting to use model for node generation: ${MODEL_NAME}`);
+      const start = Date.now();
+
+      if (!OPENROUTER_API_KEY) {
+        console.warn("OpenRouter API key is missing. Please set it in your .env file.");
+        return res.status(400).json({
+          message: "API key is required. Please set OPENROUTER_API_KEY in your .env file.",
+        });
+      }
+
+      // Call the API
+      const response = await axios.post(
+        OPENROUTER_BASE_URL,
+        {
+          model: MODEL_NAME,
+          messages: [
+            {
+              role: "user",
+              content: nodePrompt,
+            },
+          ],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          },
+        },
+      );
+
+      const duration = Date.now() - start;
+      console.log(`Successfully used model for node generation: ${MODEL_NAME}`, {
+        nodeType,
+        statusCode: response.status,
+        responseSize: JSON.stringify(response.data).length,
+        duration: `${duration}ms`,
+      });
+
+      // Process the API response
+      const aiResponse = response.data;
+
+      // Validate response structure
+      if (!aiResponse.choices || !aiResponse.choices[0] || !aiResponse.choices[0].message) {
+        console.error("Unexpected API response structure:", aiResponse);
+        return res.status(500).json({
+          message: "Unexpected API response structure",
+          aiResponse: aiResponse,
+        });
+      }
+
+      const content = aiResponse.choices[0].message.content;
+      
+      // Process the content sections using regex patterns
+      // This approach is more reliable than JSON parsing and handles multiline text better
+      const topics = extractSection(content, /key topics/i, /questions/i);
+      const questions = extractSection(content, /questions/i, /resources/i);
+      const resources = extractSection(content, /resources/i, /equations/i);
+      const equations = extractSection(content, /equations/i, /code examples/i);
+      const codeExamples = extractSection(content, /code examples/i, /$./);
+      
+      // Format resources into objects with title and url properties
+      const formattedResources = formatResources(resources);
+      
+      // Create a node ID based on title and index
+      const nodeId = generateNodeId(title, nodeIndex);
+      
+      // Generate the completed node
+      const nodeData = {
+        id: nodeId,
+        parentId: parentNodeId || null,
+        title: title,
+        description: description || "",
+        topics: formatListItems(topics),
+        questions: formatListItems(questions),
+        resources: formattedResources,
+        equations: formatListItems(equations),
+        codeExamples: formatCodeExamples(codeExamples),
+        position: { x: 0, y: 0 }
+      };
+      
+      return res.status(200).json({
+        node: nodeData,
+        rawContent: content
+      });
+      
+    } catch (error) {
+      console.error("Error generating node content:", error);
+      return res.status(500).json({
+        message: "Failed to generate node content",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+  
+  // Helper function to extract sections from AI response
+  function extractSection(text: string, startPattern: RegExp, endPattern: RegExp): string {
+    const startMatch = text.search(startPattern);
+    if (startMatch === -1) return '';
+    
+    const endMatch = text.substring(startMatch).search(endPattern);
+    if (endMatch === -1) return text.substring(startMatch);
+    
+    return text.substring(startMatch, startMatch + endMatch).trim();
+  }
+  
+  // Helper function to format list items from text
+  function formatListItems(text: string): string[] {
+    if (!text) return [];
+    
+    // Remove the section header
+    const contentWithoutHeader = text.replace(/^.*?:/i, '').trim();
+    
+    // Extract items marked with numbers, bullets, or dashes
+    const items = contentWithoutHeader.split(/\n+/)
+      .map((line: string) => line.replace(/^(\d+\.|\*|-|\s)+\s*/, '').trim())
+      .filter((item: string) => item.length > 0);
+      
+    return items;
+  }
+  
+  // Helper function to format resources into objects
+  function formatResources(text: string): Array<{title: string, url: string}> {
+    if (!text) return [];
+    
+    const resources: Array<{title: string, url: string}> = [];
+    const contentWithoutHeader = text.replace(/^.*?:/i, '').trim();
+    
+    // Extract items marked with numbers, bullets, or dashes
+    const items = contentWithoutHeader.split(/\n+/)
+      .map((line: string) => line.trim())
+      .filter((item: string) => item.length > 0);
+    
+    for (const item of items) {
+      // Try to extract title and URL
+      const titleMatch = item.match(/["']([^"']+)["']|^([^:]+):/);
+      const urlMatch = item.match(/https?:\/\/[^\s"')]+/);
+      
+      if ((titleMatch || item) && (urlMatch || item.includes('www.'))) {
+        const title = titleMatch ? (titleMatch[1] || titleMatch[2]) : item.replace(/https?:\/\/[^\s]+/, '').trim();
+        let url = '';
+        
+        if (urlMatch) {
+          url = urlMatch[0];
+        } else if (item.includes('www.')) {
+          const wwwMatch = item.match(/www\.[^\s"')]+/);
+          url = wwwMatch ? 'https://' + wwwMatch[0] : '';
+        }
+        
+        resources.push({ 
+          title: title.replace(/["':]/g, '').trim(), 
+          url: url 
+        });
+      } else if (item) {
+        // Just use the item as the title if no clear URL is found
+        resources.push({ 
+          title: item.replace(/["':]/g, '').trim(), 
+          url: '' 
+        });
+      }
+    }
+    
+    return resources;
+  }
+  
+  // Helper function to format code examples
+  function formatCodeExamples(text: string): string[] {
+    if (!text) return [];
+    
+    const contentWithoutHeader = text.replace(/^.*?:/i, '').trim();
+    
+    // Look for code blocks with ```
+    const codeBlockRegex = /```(?:\w+)?\n([\s\S]+?)```/g;
+    const codeBlocks: string[] = [];
+    let match: RegExpExecArray | null;
+    
+    while ((match = codeBlockRegex.exec(contentWithoutHeader)) !== null) {
+      codeBlocks.push(match[1].trim());
+    }
+    
+    // If no code blocks found, try to extract based on indentation
+    if (codeBlocks.length === 0) {
+      const lines = contentWithoutHeader.split('\n');
+      let currentBlock = '';
+      let inCodeBlock = false;
+      
+      for (const line of lines) {
+        if (line.startsWith('    ') || line.startsWith('\t')) {
+          if (!inCodeBlock) {
+            inCodeBlock = true;
+          }
+          currentBlock += line.replace(/^    |\t/, '') + '\n';
+        } else if (inCodeBlock && line.trim() === '') {
+          currentBlock += '\n';
+        } else if (inCodeBlock) {
+          codeBlocks.push(currentBlock.trim());
+          currentBlock = '';
+          inCodeBlock = false;
+        }
+      }
+      
+      if (inCodeBlock) {
+        codeBlocks.push(currentBlock.trim());
+      }
+    }
+    
+    // If still no code blocks, try to find examples between numbered points
+    if (codeBlocks.length === 0) {
+      const exampleMatches = contentWithoutHeader.split(/\d+\.\s+/);
+      for (const example of exampleMatches) {
+        if (example.trim().length > 0) {
+          codeBlocks.push(example.trim());
+        }
+      }
+    }
+    
+    return codeBlocks;
+  }
+  
+  // Helper function to generate a node ID
+  function generateNodeId(title: string, index?: number): string {
+    // Convert title to kebab case
+    const baseId = title
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-');
+      
+    // Add index to ensure uniqueness
+    return index ? `${baseId}-${index}` : baseId;
+  }
+  
+  // New endpoint to generate a complete learning pathway using the form-based approach
+  app.post("/api/generate-pathway", async (req, res) => {
+    try {
+      // Validate request data
+      const validated = openRouterRequestSchema.parse(req.body);
+      
+      // Step 1: Generate a pathway plan
+      console.log("Step 1: Generating pathway plan...");
+      
+      // Prepare the prompt for planning
+      let timeDescription;
+      if (validated.timespan === "custom" && validated.customDays) {
+        timeDescription = `${validated.customDays} days`;
+      } else {
+        timeDescription = validated.timespan;
+      }
+
+      const planningPrompt = `Create a learning pathway plan for "${validated.topic}" with ${timeDescription} timespan at ${validated.complexity} level.
+      
+Please provide an outline of the learning pathway with the following information:
+1. A title for the overall learning pathway
+2. A list of main topic areas (units) that should be covered
+3. For each main topic area, list 2-4 subtopics that should be included
+4. Suggest a logical sequence for these topics (what depends on what)
+5. Identify any topics that should be in separate trees because they are distinct subject areas
+
+Your response should be in a clearly structured format that's easy to parse programmatically. DO NOT provide any JSON, just plain text with clear sections.
+`;
+
+      // Check API configuration
+      const { MODEL_NAME, OPENROUTER_API_KEY, OPENROUTER_BASE_URL } = config.api;
+
+      // Call the API for planning
+      const planResponse = await axios.post(
+        OPENROUTER_BASE_URL,
+        {
+          model: MODEL_NAME,
+          messages: [
+            {
+              role: "user",
+              content: planningPrompt,
+            },
+          ],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          },
+        },
+      );
+      
+      // Extract planning content
+      const planContent = planResponse.data.choices[0].message.content;
+      console.log("Plan generated successfully");
+      
+      // Step 2: Parse plan to extract pathway title and main topics
+      const titleMatch = planContent.match(/(?:title|pathway|learning pathway)[:\s]+([^\n]+)/i);
+      const pathwayTitle = titleMatch ? titleMatch[1].trim() : `${validated.topic} Learning Pathway`;
+      
+      // Extract main topics using pattern matching
+      const mainTopicsSection = extractSection(planContent, /main topic areas|units|main topics/i, /subtopics|sequence|logical|separate trees/i);
+      const mainTopics = formatListItems(mainTopicsSection);
+      
+      // Extract subtopics by looking for mentions of main topics followed by lists
+      const allSubtopics: Record<string, string[]> = {};
+      for (const topic of mainTopics) {
+        // Find where this topic is mentioned followed by a list
+        const topicRegex = new RegExp(`${topic}[^\\n]*?(?:\\n|:)([\\s\\S]+?)(?=\\n\\s*\\d+\\.|\\n\\s*[A-Z][a-z]+:|$)`, 'i');
+        const subtopicMatch = planContent.match(topicRegex);
+        
+        if (subtopicMatch && subtopicMatch[1]) {
+          allSubtopics[topic] = formatListItems(subtopicMatch[1]);
+        } else {
+          allSubtopics[topic] = [];
+        }
+      }
+      
+      // Step 3: Create all nodes and edges
+      console.log("Step 3: Generating nodes and edges...");
+      
+      // First, create root nodes for main topics
+      const nodes = [];
+      const edges = [];
+      let nodeIndex = 1;
+      
+      // Array to keep track of path dependency relationships
+      const sequenceInfo = extractSection(planContent, /sequence|logical|order|progression/i, /separate trees|distinct|independent/i);
+      
+      // Process main topics as root nodes
+      for (const topic of mainTopics) {
+        // Generate node for this main topic
+        const rootNodeId = generateNodeId(topic, nodeIndex++);
+        
+        const nodePrompt = `Create content for a learning node with the title "${topic}". This node is a root node for a main topic area.
+
+Here is the overall learning pathway plan for context:
+${planContent}
+
+Please provide the following information for this node:
+1. Key Topics: List 3-6 key topics that should be covered in this node (return as a simple array of strings)
+2. Questions: Provide 2-4 relevant practice or assessment questions for this node (return as a simple array of strings)
+3. Resources: Suggest 2-3 high-quality learning resources (with titles and URLs) for further learning (return as an array of objects with 'title' and 'url' properties)
+4. Equations: If relevant, provide important mathematical equations for this topic (return as an array of strings or empty array if not applicable)
+5. Code Examples: If relevant, provide useful code examples for this topic (return as an array of strings or empty array if not applicable)
+
+Format your response as clearly labeled sections that I can easily parse. DO NOT use JSON formatting.`;
+
+        // Call the API for node generation
+        const nodeResponse = await axios.post(
+          OPENROUTER_BASE_URL,
+          {
+            model: MODEL_NAME,
+            messages: [
+              {
+                role: "user",
+                content: nodePrompt,
+              },
+            ],
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+            },
+          },
+        );
+        
+        const nodeContent = nodeResponse.data.choices[0].message.content;
+        
+        // Process content sections
+        const topics = extractSection(nodeContent, /key topics/i, /questions/i);
+        const questions = extractSection(nodeContent, /questions/i, /resources/i);
+        const resources = extractSection(nodeContent, /resources/i, /equations/i);
+        const equations = extractSection(nodeContent, /equations/i, /code examples/i);
+        const codeExamples = extractSection(nodeContent, /code examples/i, /$./);
+        
+        // Create node object
+        const rootNode = {
+          id: rootNodeId,
+          parentId: null,
+          title: topic,
+          description: `Main topic area for ${topic}`,
+          topics: formatListItems(topics),
+          questions: formatListItems(questions),
+          resources: formatResources(resources),
+          equations: formatListItems(equations),
+          codeExamples: formatCodeExamples(codeExamples),
+          position: { x: 0, y: 0 }
+        };
+        
+        nodes.push(rootNode);
+        
+        // Process subtopics for this main topic
+        const subtopics = allSubtopics[topic] || [];
+        let lastNodeId = rootNodeId;
+        
+        for (let i = 0; i < subtopics.length; i++) {
+          const subtopic = subtopics[i];
+          const subtopicId = generateNodeId(subtopic, nodeIndex++);
+          
+          // Generate node for this subtopic
+          const subtopicPrompt = `Create content for a learning node with the title "${subtopic}". This node is a subtopic under the main topic "${topic}".
+
+Here is the overall learning pathway plan for context:
+${planContent}
+
+Please provide the following information for this node:
+1. Key Topics: List 3-6 key topics that should be covered in this node (return as a simple array of strings)
+2. Questions: Provide 2-4 relevant practice or assessment questions for this node (return as a simple array of strings)
+3. Resources: Suggest 2-3 high-quality learning resources (with titles and URLs) for further learning (return as an array of objects with 'title' and 'url' properties)
+4. Equations: If relevant, provide important mathematical equations for this topic (return as an array of strings or empty array if not applicable)
+5. Code Examples: If relevant, provide useful code examples for this topic (return as an array of strings or empty array if not applicable)
+
+Format your response as clearly labeled sections that I can easily parse. DO NOT use JSON formatting.`;
+
+          // Call the API for subtopic node generation
+          const subtopicResponse = await axios.post(
+            OPENROUTER_BASE_URL,
+            {
+              model: MODEL_NAME,
+              messages: [
+                {
+                  role: "user",
+                  content: subtopicPrompt,
+                },
+              ],
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+              },
+            },
+          );
+          
+          const subtopicContent = subtopicResponse.data.choices[0].message.content;
+          
+          // Process content sections
+          const subTopics = extractSection(subtopicContent, /key topics/i, /questions/i);
+          const subQuestions = extractSection(subtopicContent, /questions/i, /resources/i);
+          const subResources = extractSection(subtopicContent, /resources/i, /equations/i);
+          const subEquations = extractSection(subtopicContent, /equations/i, /code examples/i);
+          const subCodeExamples = extractSection(subtopicContent, /code examples/i, /$./);
+          
+          // Create subtopic node
+          const subtopicNode = {
+            id: subtopicId,
+            parentId: rootNodeId,
+            title: subtopic,
+            description: `Subtopic of ${topic}`,
+            topics: formatListItems(subTopics),
+            questions: formatListItems(subQuestions),
+            resources: formatResources(subResources),
+            equations: formatListItems(subEquations),
+            codeExamples: formatCodeExamples(subCodeExamples),
+            position: { x: 0, y: 0 }
+          };
+          
+          nodes.push(subtopicNode);
+          
+          // Create edge from parent to this subtopic
+          const edgeId = `edge-${rootNodeId}-${subtopicId}`;
+          edges.push({
+            id: edgeId,
+            source: rootNodeId,
+            target: subtopicId,
+            label: "Includes",
+            animated: false
+          });
+          
+          // If not the first subtopic, also create edge from previous subtopic
+          if (i > 0) {
+            const prevEdgeId = `edge-seq-${lastNodeId}-${subtopicId}`;
+            edges.push({
+              id: prevEdgeId,
+              source: lastNodeId,
+              target: subtopicId,
+              label: "Leads to",
+              animated: false
+            });
+          }
+          
+          lastNodeId = subtopicId;
+        }
+      }
+      
+      // Add cross-topic edges based on sequence info
+      if (sequenceInfo) {
+        // Look for patterns like "Topic A depends on Topic B" or "Topic A follows Topic B"
+        const dependencyRegex = /(\w+(?:\s+\w+)*)\s+(?:depends on|follows|after|requires|builds on)\s+(\w+(?:\s+\w+)*)/gi;
+        let match;
+        
+        while ((match = dependencyRegex.exec(sequenceInfo)) !== null) {
+          const dependentTopic = match[1].trim();
+          const prerequisiteTopic = match[2].trim();
+          
+          // Find nodes that best match these topics
+          const dependentNode = findBestMatchingNode(nodes, dependentTopic);
+          const prerequisiteNode = findBestMatchingNode(nodes, prerequisiteTopic);
+          
+          if (dependentNode && prerequisiteNode) {
+            const crossEdgeId = `edge-cross-${prerequisiteNode.id}-${dependentNode.id}`;
+            edges.push({
+              id: crossEdgeId,
+              source: prerequisiteNode.id,
+              target: dependentNode.id,
+              label: "Prerequisite for",
+              animated: true
+            });
+          }
+        }
+      }
+      
+      // Step 4: Create the pathway
+      console.log("Step 4: Creating pathway in database...");
+      
+      // Create the pathway
+      const pathway = await storage.createPathway({
+        title: pathwayTitle,
+        timespan: validated.timespan,
+        complexity: validated.complexity,
+        customDays: validated.customDays || undefined
+      });
+      
+      // Add all nodes and edges to the database
+      for (const node of nodes) {
+        await storage.createNode({
+          pathwayId: pathway.id,
+          nodeId: node.id,
+          title: node.title,
+          description: node.description,
+          topics: node.topics,
+          questions: node.questions,
+          resources: node.resources,
+          equations: node.equations,
+          codeExamples: node.codeExamples,
+          parentId: node.parentId,
+          position: node.position
+        });
+      }
+      
+      for (const edge of edges) {
+        await storage.createEdge({
+          pathwayId: pathway.id,
+          edgeId: edge.id,
+          source: edge.source,
+          target: edge.target,
+          label: edge.label,
+          animated: edge.animated ? 1 : 0
+        });
+      }
+      
+      // Return the complete learning pathway
+      return res.status(201).json({
+        pathway,
+        nodes,
+        edges,
+        plan: planContent
+      });
+      
+    } catch (error) {
+      console.error("Error generating complete pathway:", error);
+      return res.status(500).json({
+        message: "Failed to generate complete pathway",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+  
+  // Helper function to find the best matching node based on topic name
+  function findBestMatchingNode(nodes: any[], topicName: string): any {
+    // First try exact match on title
+    const exactMatch = nodes.find((node: any) => 
+      node.title.toLowerCase() === topicName.toLowerCase()
+    );
+    
+    if (exactMatch) return exactMatch;
+    
+    // Try contains match on title
+    const containsMatch = nodes.find((node: any) => 
+      node.title.toLowerCase().includes(topicName.toLowerCase()) || 
+      topicName.toLowerCase().includes(node.title.toLowerCase())
+    );
+    
+    if (containsMatch) return containsMatch;
+    
+    // Try matching on topics
+    return nodes.find((node: any) => 
+      node.topics.some((topic: string) => 
+        topic.toLowerCase().includes(topicName.toLowerCase()) || 
+        topicName.toLowerCase().includes(topic.toLowerCase())
+      )
+    );
+  }
+  
+  // Original generate endpoint for backward compatibility
   app.post("/api/generate", async (req, res) => {
     try {
       // Step 1: Validate request data

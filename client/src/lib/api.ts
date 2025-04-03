@@ -37,8 +37,34 @@ export const fetchNodesAndEdges = async (pathwayId: number) => {
   return { nodes, edges };
 };
 
+// Old JSON-based approach
 export const generatePathway = async (data: PathwayFormData): Promise<CompleteLearningPathway> => {
   const res = await apiRequest('POST', '/api/generate', data);
+  return res.json();
+};
+
+// New form-based pathway generation approach
+export const generatePathwayWithForms = async (data: PathwayFormData): Promise<CompleteLearningPathway> => {
+  const res = await apiRequest('POST', '/api/generate-pathway', data);
+  return res.json();
+};
+
+// Step 1: Generate a plan for the pathway
+export const planPathway = async (data: PathwayFormData): Promise<{plan: string, topic: string, timespan: string, customDays?: number, complexity: string}> => {
+  const res = await apiRequest('POST', '/api/plan-pathway', data);
+  return res.json();
+};
+
+// Step 2: Generate a node with specific content
+export const generateNode = async (nodeData: {
+  nodeType: string,
+  title: string,
+  description?: string,
+  parentNodeId?: string,
+  pathwayPlan: string,
+  nodeIndex?: number
+}): Promise<{node: any, rawContent: string}> => {
+  const res = await apiRequest('POST', '/api/generate-node', nodeData);
   return res.json();
 };
 

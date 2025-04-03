@@ -1,8 +1,18 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { ReactFlowInstance, useReactFlow, Node, Edge } from 'reactflow';
+import { ReactFlowInstance, useReactFlow, Node, Edge, EdgeMarker, MarkerType } from 'reactflow';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchPathways, fetchPathway, fetchNodesAndEdges, generatePathway, deletePathway, enhanceNode } from './api';
+import { 
+  fetchPathways, 
+  fetchPathway, 
+  fetchNodesAndEdges, 
+  generatePathway, 
+  generatePathwayWithForms,
+  planPathway,
+  generateNode,
+  deletePathway, 
+  enhanceNode 
+} from './api';
 import { PathwayFormData, NodeEnhancementData } from '@/types';
 
 // Hook for sidebar collapse state
@@ -26,6 +36,7 @@ export const usePathways = () => {
     queryFn: fetchPathways,
   });
   
+  // Original JSON-based pathway generation
   const generateMutation = useMutation({
     mutationFn: (data: PathwayFormData) => generatePathway(data),
     onSuccess: () => {
@@ -39,6 +50,70 @@ export const usePathways = () => {
       toast({
         title: "Error",
         description: `Failed to generate pathway: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // New form-based pathway generation
+  const generateFormMutation = useMutation({
+    mutationFn: (data: PathwayFormData) => generatePathwayWithForms(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/pathways'] });
+      toast({
+        title: "Success",
+        description: "Learning pathway generated successfully using form-based approach",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to generate pathway: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Step 1: Plan the pathway
+  const planMutation = useMutation({
+    mutationFn: (data: PathwayFormData) => planPathway(data),
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: "Learning pathway plan created successfully",
+      });
+      return data;
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to plan pathway: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Step 2: Generate a node
+  const nodeGenerateMutation = useMutation({
+    mutationFn: (nodeData: {
+      nodeType: string,
+      title: string,
+      description?: string,
+      parentNodeId?: string,
+      pathwayPlan: string,
+      nodeIndex?: number
+    }) => generateNode(nodeData),
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: "Node content generated successfully",
+      });
+      return data;
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to generate node: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -66,8 +141,19 @@ export const usePathways = () => {
     pathways,
     isLoading,
     error,
+    // Original JSON-based approach
     generatePathway: generateMutation.mutate,
     isGenerating: generateMutation.isPending,
+    // New form-based approach
+    generatePathwayWithForms: generateFormMutation.mutate,
+    isGeneratingForm: generateFormMutation.isPending,
+    // Staged generation (Plan -> Generate Nodes)
+    planPathway: planMutation.mutate,
+    isPlanningPathway: planMutation.isPending,
+    planData: planMutation.data,
+    generateNode: nodeGenerateMutation.mutate,
+    isGeneratingNode: nodeGenerateMutation.isPending,
+    // Delete pathway
     deletePathway: deleteMutation.mutate,
     isDeleting: deleteMutation.isPending,
   };
@@ -238,13 +324,7 @@ export const useAddNode = () => {
       animated: false,
       style: {
         stroke: '#718096',
-      },
-      markerEnd: {
-        type: 'arrowclosed',
-        width: 20,
-        height: 20,
-        color: '#718096',
-      },
+      }
     };
     
     // Add the new edge
