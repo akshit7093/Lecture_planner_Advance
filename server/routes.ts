@@ -804,7 +804,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
 
       // Call the OpenRouter API with only google/gemini-2.5-pro-exp-03-25:free model as requested
       console.log(
-        `Attempting to use model for node enhancement: google/gemini-2.5-pro-exp-03-25:free`,
+        `Attempting to use model for node enhancement: meta-llama/llama-3.2-3b-instruct:free`,
         {
           enhanceType,
           nodeId,
