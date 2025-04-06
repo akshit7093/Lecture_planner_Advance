@@ -89,27 +89,24 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
   console.log("Node IDs in database:", nodes.map(n => n.id).join(', '));
   console.log("Node nodeIDs in database:", nodes.map(n => n.nodeId).join(', '));
   
-  // Create a mapping from database IDs to nodeIds
-  const nodeIdMapping = new Map<number, string>();
-  nodes.forEach(node => {
-    nodeIdMapping.set(node.id, node.nodeId);
-  });
-  
-  console.log("Node ID mapping:", Array.from(nodeIdMapping.entries()).map(([dbId, nodeId]) => `${dbId} -> ${nodeId}`).join(', '));
-  
+  // IMPORTANT: First, ensure all nodes have a valid nodeId (this is crucial for edge connections)
   const reactFlowNodes: CustomNode[] = nodes.map((node) => {
-    // Always use the nodeId for ReactFlow as it's what we use for connections
-    // If nodeId is missing, generate a fallback using the database ID
-    const nodeIdStr = node.nodeId || `node_${node.id}_fallback`;
+    // If nodeId is missing, generate a new one and update the node object
+    if (!node.nodeId) {
+      node.nodeId = `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      console.log(`Generated new nodeId ${node.nodeId} for node ${node.id}`);
+    }
     
-    console.log(`Converting node ${node.id}: title=${node.title}, nodeId=${nodeIdStr}`);
+    // Log node conversion
+    console.log(`Converting node ${node.id}: title=${node.title}, nodeId=${node.nodeId}`);
     
+    // Convert to ReactFlow node format
     return {
-      id: nodeIdStr,
+      id: node.nodeId, // This is the critical ID used for edge connections
       type: 'customNode',
       position: node.position as { x: number, y: number },
       data: {
-        id: node.id,
+        id: node.id, // Keep database ID for reference
         label: node.title,
         description: node.description,
         topics: node.topics as string[] | undefined,
@@ -122,22 +119,44 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
     };
   });
 
-  // Add debug logs
+  // Create a set of valid node IDs for checking edge connections
+  const nodeIdsSet = new Set(reactFlowNodes.map(node => node.id));
+  console.log("Available node IDs:", Array.from(nodeIdsSet).join(', '));
+  
+  // Map database node IDs to nodeIds for potential lookups
+  const dbIdToNodeId = new Map<number, string>();
+  nodes.forEach(node => {
+    if (node.id && node.nodeId) {
+      dbIdToNodeId.set(node.id, node.nodeId);
+    }
+  });
+
+  // Add debug logs for edges
   console.log("Converting edges count:", edges.length);
   console.log("Edge IDs in database:", edges.map(e => e.id).join(', '));
   console.log("Edge connections in database:", edges.map(e => `${e.source} -> ${e.target}`).join(', '));
   
   const reactFlowEdges: CustomEdge[] = edges.map((edge) => {
-    // For ReactFlow edges, we need to use the edge.edgeId for the id
-    // If edgeId is missing, generate a fallback using the database ID
-    const edgeIdStr = edge.edgeId || `edge_${edge.id}_fallback`;
+    // For edges, ensure we have a unique edge ID
+    const edgeIdStr = edge.edgeId || `edge_${edge.id}_${Date.now()}`;
     
-    // The source and target should match the nodeId values, not the database id
-    // Ensure they have values, fallback to empty string (will be filtered later)
+    // The source and target should be nodeId strings that exist in our nodes
     const sourceStr = edge.source || "";
     const targetStr = edge.target || "";
     
     console.log(`Converting edge ${edge.id}: edgeId=${edgeIdStr}, source=${sourceStr}, target=${targetStr}`);
+    
+    // Verify if the source/target exists in our node set
+    const sourceExists = nodeIdsSet.has(sourceStr);
+    const targetExists = nodeIdsSet.has(targetStr);
+    
+    if (!sourceExists) {
+      console.log(`Warning: Edge source ${sourceStr} does not match any node ID`);
+    }
+    
+    if (!targetExists) {
+      console.log(`Warning: Edge target ${targetStr} does not match any node ID`);
+    }
     
     return {
       id: edgeIdStr,
@@ -153,15 +172,25 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
       markerEnd: MarkerType.ArrowClosed,
       style: {
         stroke: '#718096',
+        strokeWidth: 2,
       },
     };
   });
   
-  // Filter out any edges with empty source or target
-  const validReactFlowEdges = reactFlowEdges.filter(edge => 
-    edge.source && edge.target && 
-    edge.source.trim() !== "" && edge.target.trim() !== ""
-  );
+  // Filter out any invalid edges - those with missing source/target or those that don't match any nodes
+  const validReactFlowEdges = reactFlowEdges.filter(edge => {
+    if (!edge.source || !edge.target || edge.source.trim() === "" || edge.target.trim() === "") {
+      console.log(`Filtering out edge ${edge.id} with empty source/target`);
+      return false;
+    }
+    
+    if (!nodeIdsSet.has(edge.source) || !nodeIdsSet.has(edge.target)) {
+      console.log(`Filtering out edge ${edge.id} with nonexistent source/target: ${edge.source} -> ${edge.target}`);
+      return false;
+    }
+    
+    return true;
+  });
 
   // Log final conversion
   console.log("Converted ReactFlow nodes:", reactFlowNodes.map(n => `${n.id}`).join(', '));
