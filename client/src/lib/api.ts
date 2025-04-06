@@ -89,6 +89,17 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
   console.log("Node IDs in database:", nodes.map(n => n.id).join(', '));
   console.log("Node nodeIDs in database:", nodes.map(n => n.nodeId).join(', '));
   
+  // Create a mapping from edge source/target IDs to actual node IDs
+  const edgeIdToNodeIdMap = new Map<string, string>();
+  
+  // First, extract any potential IDs from edges that might not match node IDs
+  const edgeSourceIds = new Set(edges.map(e => e.source));
+  const edgeTargetIds = new Set(edges.map(e => e.target));
+  
+  // Log all unique edge source/target IDs for debugging
+  console.log("Unique source IDs from edges:", Array.from(edgeSourceIds).join(', '));
+  console.log("Unique target IDs from edges:", Array.from(edgeTargetIds).join(', '));
+  
   // IMPORTANT: First, ensure all nodes have a valid nodeId (this is crucial for edge connections)
   const reactFlowNodes: CustomNode[] = nodes.map((node) => {
     // If nodeId is missing, generate a new one and update the node object
@@ -97,8 +108,32 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
       console.log(`Generated new nodeId ${node.nodeId} for node ${node.id}`);
     }
     
+    // Try to match node title with edge source/target IDs
+    // This is a fallback mechanism when nodeIds don't match edge source/target
+    const normalizedTitle = node.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    // Map any edge ID that looks like it might be a variant of this node's title
+    if (node.nodeId) {
+      edgeIdToNodeIdMap.set(normalizedTitle, node.nodeId);
+      // Also add variations like "week1" for "Week 1: Introduction"
+      if (node.title.match(/week\s+\d+/i)) {
+        const weekMatch = node.title.match(/week\s+(\d+)/i);
+        if (weekMatch) {
+          const weekId = `week${weekMatch[1]}`;
+          edgeIdToNodeIdMap.set(weekId, node.nodeId);
+          // Also try with suffix variations
+          edgeIdToNodeIdMap.set(`${weekId}-foundations`, node.nodeId);
+          edgeIdToNodeIdMap.set(`${weekId}-introduction`, node.nodeId);
+        }
+      }
+    }
+    
     // Log node conversion
-    console.log(`Converting node ${node.id}: title=${node.title}, nodeId=${node.nodeId}`);
+    console.log(`Converting node ${node.id}: title=${node.title}, nodeId=${node.nodeId}, normalized=${normalizedTitle}`);
     
     // Convert to ReactFlow node format
     return {
@@ -130,6 +165,13 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
       dbIdToNodeId.set(node.id, node.nodeId);
     }
   });
+  
+  // Debug log for the edge ID to node ID mapping
+  console.log("EdgeID to NodeID mapping:", 
+    Array.from(edgeIdToNodeIdMap.entries())
+      .map(([edgeId, nodeId]) => `${edgeId} -> ${nodeId}`)
+      .join(', ')
+  );
 
   // Add debug logs for edges
   console.log("Converting edges count:", edges.length);
@@ -140,28 +182,36 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
     // For edges, ensure we have a unique edge ID
     const edgeIdStr = edge.edgeId || `edge_${edge.id}_${Date.now()}`;
     
-    // The source and target should be nodeId strings that exist in our nodes
-    const sourceStr = edge.source || "";
-    const targetStr = edge.target || "";
+    // Get the source and target from the edge
+    let sourceStr = edge.source || "";
+    let targetStr = edge.target || "";
     
-    console.log(`Converting edge ${edge.id}: edgeId=${edgeIdStr}, source=${sourceStr}, target=${targetStr}`);
+    // Try to map the edge source/target to actual node IDs using our mapping
+    const mappedSourceId = edgeIdToNodeIdMap.get(sourceStr);
+    const mappedTargetId = edgeIdToNodeIdMap.get(targetStr);
+    
+    // Use the mapped IDs if available, otherwise stick with the original
+    const finalSourceId = mappedSourceId || sourceStr;
+    const finalTargetId = mappedTargetId || targetStr;
+    
+    console.log(`Converting edge ${edge.id}: edgeId=${edgeIdStr}, originalSource=${sourceStr}, originalTarget=${targetStr}, mappedSource=${mappedSourceId}, mappedTarget=${mappedTargetId}`);
     
     // Verify if the source/target exists in our node set
-    const sourceExists = nodeIdsSet.has(sourceStr);
-    const targetExists = nodeIdsSet.has(targetStr);
+    const sourceExists = nodeIdsSet.has(finalSourceId);
+    const targetExists = nodeIdsSet.has(finalTargetId);
     
     if (!sourceExists) {
-      console.log(`Warning: Edge source ${sourceStr} does not match any node ID`);
+      console.log(`Warning: Edge source ${finalSourceId} (original: ${sourceStr}) does not match any node ID`);
     }
     
     if (!targetExists) {
-      console.log(`Warning: Edge target ${targetStr} does not match any node ID`);
+      console.log(`Warning: Edge target ${finalTargetId} (original: ${targetStr}) does not match any node ID`);
     }
     
     return {
       id: edgeIdStr,
-      source: sourceStr,
-      target: targetStr,
+      source: finalSourceId,
+      target: finalTargetId,
       type: 'smoothstep',
       animated: edge.animated === 1,
       label: edge.label || undefined,
@@ -184,9 +234,22 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
       return false;
     }
     
-    if (!nodeIdsSet.has(edge.source) || !nodeIdsSet.has(edge.target)) {
-      console.log(`Filtering out edge ${edge.id} with nonexistent source/target: ${edge.source} -> ${edge.target}`);
+    // Only filter out if both source and target are missing
+    // We want to keep edges where at least one end is connected
+    const sourceValid = nodeIdsSet.has(edge.source);
+    const targetValid = nodeIdsSet.has(edge.target);
+    
+    if (!sourceValid && !targetValid) {
+      console.log(`Filtering out edge ${edge.id} with both nonexistent source and target: ${edge.source} -> ${edge.target}`);
       return false;
+    }
+    
+    if (!sourceValid) {
+      console.log(`Warning: Edge ${edge.id} has invalid source ${edge.source}, but keeping it since target is valid`);
+    }
+    
+    if (!targetValid) {
+      console.log(`Warning: Edge ${edge.id} has invalid target ${edge.target}, but keeping it since source is valid`);
     }
     
     return true;
@@ -242,16 +305,39 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
   edges.forEach(edge => {
     // This is crucial: we need to use the React Flow string ID, not the database ID
     const sourceItem = nodeMap.get(edge.source);
-    const targetNode = nodes.find(n => n.id === edge.target);
     
+    // First, try exact match
+    let targetNode = nodes.find(n => n.id === edge.target);
+    
+    // If the edge.target doesn't match any node ID, log and skip
+    if (!sourceItem || !targetNode) {
+      console.log(`Could not connect edge: ${edge.source} -> ${edge.target}`);
+      
+      if (!sourceItem) console.log(`  Source node ${edge.source} not found in nodeMap`);
+      if (!targetNode) console.log(`  Target node ${edge.target} not found in nodes array`);
+      
+      // Try to recover by finding any node whose ID contains the target as a substring
+      // This is a last resort for badly formatted edge targets
+      if (!targetNode) {
+        const potentialTargets = nodes.filter(n => 
+          n.id.includes(edge.target) || 
+          n.data.label.toLowerCase().includes(edge.target.toLowerCase())
+        );
+        
+        if (potentialTargets.length === 1) {
+          targetNode = potentialTargets[0];
+          console.log(`  Recovered by finding ${targetNode.id} as potential match for ${edge.target}`);
+        } else if (potentialTargets.length > 1) {
+          console.log(`  Found multiple potential matches for ${edge.target}: ${potentialTargets.map(n => n.id).join(', ')}`);
+        }
+      }
+    }
+    
+    // If we found both nodes (either directly or through recovery), add the connection
     if (sourceItem && targetNode) {
       sourceItem.children.push(targetNode);
       console.log(`Added child ${targetNode.id} to parent ${edge.source}`);
     } else {
-      console.log(`Could not connect edge: ${edge.source} -> ${edge.target}`);
-      if (!sourceItem) console.log(`  Source node ${edge.source} not found in nodeMap`);
-      if (!targetNode) console.log(`  Target node ${edge.target} not found in nodes array`);
-      
       // Log all node IDs to help debug
       console.log("Available node IDs in nodes array:", nodes.map(n => n.id).join(', '));
       console.log("Available node IDs in nodeMap:", Array.from(nodeMap.keys()).join(', '));

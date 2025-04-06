@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -27,11 +27,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAddNode } from '@/lib/hooks';
 import 'reactflow/dist/style.css';
 import { CustomNode, CustomEdge } from '@/types';
-
-// Register custom node types
-const nodeTypes = {
-  customNode: NodeComponent,
-};
 
 interface FlowCanvasProps {
   nodes: DbNode[];
@@ -315,6 +310,11 @@ const FlowCanvas = ({
       }
     }
   }, [dbNodes, dbEdges, reactFlowInstance]);
+  
+  // Define nodeTypes upfront to avoid React Flow warning
+  const nodeTypes = useMemo(() => ({
+    customNode: NodeComponent,
+  }), []);
   
   return (
     <div className="flex-1 overflow-hidden relative" ref={reactFlowWrapper}>
