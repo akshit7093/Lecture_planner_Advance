@@ -1,0 +1,29 @@
+react.development.js:209 
+ Warning: Each child in a list should have a unique "key" prop.
+
+Check the render method of `NodeRenderer`. See https://reactjs.org/link/warning-keys for more information.
+    at NodeWrapper (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:6204:30)
+    at NodeRenderer (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:6460:115)
+    at div
+    at Viewport (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:6921:31)
+    at div
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:5692:39
+    at div
+    at ZoomPane (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:5319:19)
+    at FlowRenderer (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:6397:33)
+    at GraphView (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:7037:20)
+    at Wrapper (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:7338:28)
+    at div
+    at https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:7369:50
+    at div
+    at FlowCanvas (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/components/FlowCanvas.tsx:41:10)
+    at ReactFlowProvider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…e/runner/workspace/node_modules/.vite/deps/reactflow.js?v=a4b86a43:7330:38)
+    at div
+    at div
+    at Dashboard (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.dev/src/pages/Dashboard.tsx:28:53)
+    at Route (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a4b86a43:191:16)
+    at Switch (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=a4b86a43:247:17)
+    at Suspense
+    at Router
+    at App
+    at QueryClientProvider (https://fdfa7c0f-d459-4df4-b684-c659c8c52df3-00-3ti2sn3o2wrkq.spock.replit.…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=a4b86a43:2805:3

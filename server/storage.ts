@@ -67,7 +67,15 @@ export class MemStorage implements IStorage {
   async createPathway(pathwayData: InsertPathway): Promise<Pathway> {
     const id = this.currentPathwayId++;
     const createdAt = new Date();
-    const pathway: Pathway = { ...pathwayData, id, createdAt };
+    
+    // Ensure all required fields are properly set with null values if undefined
+    const pathway: Pathway = { 
+      ...pathwayData, 
+      id, 
+      createdAt,
+      customDays: pathwayData.customDays ?? null 
+    };
+    
     this.pathways.set(id, pathway);
     return pathway;
   }
@@ -98,16 +106,62 @@ export class MemStorage implements IStorage {
 
   // Node operations
   async getNodes(pathwayId: number): Promise<Node[]> {
-    return Array.from(this.nodes.values()).filter(node => node.pathwayId === pathwayId);
+    // Get nodes for the pathway
+    const nodes = Array.from(this.nodes.values()).filter(node => node.pathwayId === pathwayId);
+    
+    // Ensure each node has a nodeId (backward compatibility)
+    return nodes.map(node => {
+      if (!node.nodeId) {
+        const generatedNodeId = `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+        console.log(`Generated nodeId ${generatedNodeId} for existing node ${node.id}`);
+        this.nodes.set(node.id, {...node, nodeId: generatedNodeId});
+        return {...node, nodeId: generatedNodeId};
+      }
+      return node;
+    });
   }
 
   async getNode(id: number): Promise<Node | undefined> {
-    return this.nodes.get(id);
+    const node = this.nodes.get(id);
+    if (!node) return undefined;
+    
+    // Ensure node has a nodeId (backward compatibility)
+    if (!node.nodeId) {
+      const generatedNodeId = `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+      console.log(`Generated nodeId ${generatedNodeId} for existing node ${node.id}`);
+      const updatedNode = {...node, nodeId: generatedNodeId};
+      this.nodes.set(id, updatedNode);
+      return updatedNode;
+    }
+    
+    return node;
   }
 
   async createNode(nodeData: InsertNode): Promise<Node> {
     const id = this.currentNodeId++;
-    const node: Node = { ...nodeData, id };
+    
+    // Convert array-like objects to actual arrays and ensure null for undefined values
+    const ensureArray = <T>(value: T[] | null | undefined): T[] | null => {
+      if (value === undefined) return null;
+      if (value === null) return null;
+      return Array.isArray(value) ? value : Array.from(value);
+    };
+    
+    // Ensure all required fields are properly set with null values if undefined
+    const node: Node = { 
+      ...nodeData, 
+      id,
+      parentId: nodeData.parentId ?? null,
+      description: nodeData.description ?? null,
+      nodeType: nodeData.nodeType ?? null,
+      topics: ensureArray(nodeData.topics),
+      questions: ensureArray(nodeData.questions),
+      resources: ensureArray(nodeData.resources),
+      equations: ensureArray(nodeData.equations),
+      codeExamples: ensureArray(nodeData.codeExamples),
+      metadata: nodeData.metadata ?? {}
+    };
+    
     this.nodes.set(id, node);
     return node;
   }
@@ -116,7 +170,39 @@ export class MemStorage implements IStorage {
     const node = this.nodes.get(id);
     if (!node) return undefined;
 
-    const updatedNode: Node = { ...node, ...nodeData };
+    // Convert array-like objects to actual arrays and ensure null for undefined values
+    const ensureArray = <T>(value: T[] | null | undefined): T[] | null => {
+      if (value === undefined) return null;
+      if (value === null) return null;
+      return Array.isArray(value) ? value : Array.from(value);
+    };
+    
+    // Process array fields correctly
+    const processedData: Partial<InsertNode> = {
+      ...nodeData
+    };
+    
+    if ('topics' in nodeData) {
+      processedData.topics = ensureArray(nodeData.topics);
+    }
+    
+    if ('questions' in nodeData) {
+      processedData.questions = ensureArray(nodeData.questions);
+    }
+    
+    if ('resources' in nodeData) {
+      processedData.resources = ensureArray(nodeData.resources);
+    }
+    
+    if ('equations' in nodeData) {
+      processedData.equations = ensureArray(nodeData.equations);
+    }
+    
+    if ('codeExamples' in nodeData) {
+      processedData.codeExamples = ensureArray(nodeData.codeExamples);
+    }
+
+    const updatedNode: Node = { ...node, ...processedData };
     this.nodes.set(id, updatedNode);
     return updatedNode;
   }
@@ -149,7 +235,15 @@ export class MemStorage implements IStorage {
 
   async createEdge(edgeData: InsertEdge): Promise<Edge> {
     const id = this.currentEdgeId++;
-    const edge: Edge = { ...edgeData, id };
+    
+    // Ensure all required fields are properly set with null values if undefined
+    const edge: Edge = { 
+      ...edgeData, 
+      id,
+      label: edgeData.label ?? null,
+      animated: edgeData.animated ?? null
+    };
+    
     this.edges.set(id, edge);
     return edge;
   }

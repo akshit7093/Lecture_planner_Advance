@@ -99,7 +99,8 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
   
   const reactFlowNodes: CustomNode[] = nodes.map((node) => {
     // Always use the nodeId for ReactFlow as it's what we use for connections
-    const nodeIdStr = node.nodeId;
+    // If nodeId is missing, generate a fallback using the database ID
+    const nodeIdStr = node.nodeId || `node_${node.id}_fallback`;
     
     console.log(`Converting node ${node.id}: title=${node.title}, nodeId=${nodeIdStr}`);
     
@@ -128,11 +129,13 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
   
   const reactFlowEdges: CustomEdge[] = edges.map((edge) => {
     // For ReactFlow edges, we need to use the edge.edgeId for the id
-    const edgeIdStr = edge.edgeId;
+    // If edgeId is missing, generate a fallback using the database ID
+    const edgeIdStr = edge.edgeId || `edge_${edge.id}_fallback`;
     
     // The source and target should match the nodeId values, not the database id
-    const sourceStr = edge.source;
-    const targetStr = edge.target;
+    // Ensure they have values, fallback to empty string (will be filtered later)
+    const sourceStr = edge.source || "";
+    const targetStr = edge.target || "";
     
     console.log(`Converting edge ${edge.id}: edgeId=${edgeIdStr}, source=${sourceStr}, target=${targetStr}`);
     
@@ -153,12 +156,19 @@ export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => 
       },
     };
   });
+  
+  // Filter out any edges with empty source or target
+  const validReactFlowEdges = reactFlowEdges.filter(edge => 
+    edge.source && edge.target && 
+    edge.source.trim() !== "" && edge.target.trim() !== ""
+  );
 
   // Log final conversion
   console.log("Converted ReactFlow nodes:", reactFlowNodes.map(n => `${n.id}`).join(', '));
-  console.log("Converted ReactFlow edges:", reactFlowEdges.map(e => `${e.source} -> ${e.target}`).join(', '));
+  console.log("Valid ReactFlow edges:", validReactFlowEdges.map(e => `${e.source} -> ${e.target}`).join(', '));
+  console.log(`Filtered out ${reactFlowEdges.length - validReactFlowEdges.length} invalid edges`);
 
-  return { nodes: reactFlowNodes, edges: reactFlowEdges };
+  return { nodes: reactFlowNodes, edges: validReactFlowEdges };
 };
 
 // Auto layout the nodes in a horizontal hierarchical tree

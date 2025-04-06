@@ -26,6 +26,10 @@ function sanitizeNodeData(node: any): any {
     delete sanitized.id; // We'll use our database's auto-generated ID
   } else if (sanitized.nodeId !== undefined) {
     sanitized.nodeId = String(sanitized.nodeId);
+  } else {
+    // If neither id nor nodeId exist, generate a unique nodeId
+    sanitized.nodeId = `node_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    console.log(`Generated new nodeId for node: ${sanitized.nodeId}`);
   }
   
   // Ensure parentId is properly handled

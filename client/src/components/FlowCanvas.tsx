@@ -262,8 +262,13 @@ const FlowCanvas = ({
   // Go to the root node (Home button functionality)
   const goToRootNode = useCallback(() => {
     // Find the root node (usually the first one with no parent or with id containing 'root')
+    // First check if we have nodes to avoid errors
+    if (nodes.length === 0) {
+      return; // No nodes to navigate to
+    }
+    
     const rootNode = nodes.find(n => 
-      n.id.includes('root') || 
+      (n.id && typeof n.id === 'string' && n.id.includes('root')) || 
       !edges.some(e => e.target === n.id)
     );
     
