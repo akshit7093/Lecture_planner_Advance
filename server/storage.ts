@@ -140,11 +140,25 @@ export class MemStorage implements IStorage {
   async createNode(nodeData: InsertNode): Promise<Node> {
     const id = this.currentNodeId++;
     
-    // Convert array-like objects to actual arrays and ensure null for undefined values
-    const ensureArray = <T>(value: T[] | null | undefined): T[] | null => {
-      if (value === undefined) return null;
-      if (value === null) return null;
-      return Array.isArray(value) ? value : Array.from(value);
+    // Type-safe helper functions for handling arrays
+    const ensureStringArray = (value: any[] | null | undefined): string[] | null => {
+      if (value === undefined || value === null) return null;
+      return Array.isArray(value) ? value.map(item => String(item)) : [];
+    };
+    
+    const ensureResourceArray = (value: any[] | null | undefined): { title: string; url: string }[] | null => {
+      if (value === undefined || value === null) return null;
+      if (!Array.isArray(value)) return [];
+      
+      return value.map(item => {
+        if (typeof item === 'object' && item !== null) {
+          return {
+            title: String(item.title || ''),
+            url: String(item.url || '')
+          };
+        }
+        return { title: '', url: '' };
+      });
     };
     
     // Ensure all required fields are properly set with null values if undefined
@@ -154,11 +168,11 @@ export class MemStorage implements IStorage {
       parentId: nodeData.parentId ?? null,
       description: nodeData.description ?? null,
       nodeType: nodeData.nodeType ?? null,
-      topics: ensureArray(nodeData.topics),
-      questions: ensureArray(nodeData.questions),
-      resources: ensureArray(nodeData.resources),
-      equations: ensureArray(nodeData.equations),
-      codeExamples: ensureArray(nodeData.codeExamples),
+      topics: ensureStringArray(nodeData.topics),
+      questions: ensureStringArray(nodeData.questions),
+      resources: ensureResourceArray(nodeData.resources),
+      equations: ensureStringArray(nodeData.equations),
+      codeExamples: ensureStringArray(nodeData.codeExamples),
       metadata: nodeData.metadata ?? {}
     };
     
@@ -170,11 +184,25 @@ export class MemStorage implements IStorage {
     const node = this.nodes.get(id);
     if (!node) return undefined;
 
-    // Convert array-like objects to actual arrays and ensure null for undefined values
-    const ensureArray = <T>(value: T[] | null | undefined): T[] | null => {
-      if (value === undefined) return null;
-      if (value === null) return null;
-      return Array.isArray(value) ? value : Array.from(value);
+    // Type-safe helper functions for handling arrays (reusing same functions from createNode)
+    const ensureStringArray = (value: any[] | null | undefined): string[] | null => {
+      if (value === undefined || value === null) return null;
+      return Array.isArray(value) ? value.map(item => String(item)) : [];
+    };
+    
+    const ensureResourceArray = (value: any[] | null | undefined): { title: string; url: string }[] | null => {
+      if (value === undefined || value === null) return null;
+      if (!Array.isArray(value)) return [];
+      
+      return value.map(item => {
+        if (typeof item === 'object' && item !== null) {
+          return {
+            title: String(item.title || ''),
+            url: String(item.url || '')
+          };
+        }
+        return { title: '', url: '' };
+      });
     };
     
     // Process array fields correctly
@@ -183,26 +211,47 @@ export class MemStorage implements IStorage {
     };
     
     if ('topics' in nodeData) {
-      processedData.topics = ensureArray(nodeData.topics);
+      processedData.topics = ensureStringArray(nodeData.topics);
     }
     
     if ('questions' in nodeData) {
-      processedData.questions = ensureArray(nodeData.questions);
+      processedData.questions = ensureStringArray(nodeData.questions);
     }
     
     if ('resources' in nodeData) {
-      processedData.resources = ensureArray(nodeData.resources);
+      processedData.resources = ensureResourceArray(nodeData.resources);
     }
     
     if ('equations' in nodeData) {
-      processedData.equations = ensureArray(nodeData.equations);
+      processedData.equations = ensureStringArray(nodeData.equations);
     }
     
     if ('codeExamples' in nodeData) {
-      processedData.codeExamples = ensureArray(nodeData.codeExamples);
+      processedData.codeExamples = ensureStringArray(nodeData.codeExamples);
     }
 
-    const updatedNode: Node = { ...node, ...processedData };
+    // Create a properly typed updated node
+    const updatedNode: Node = {
+      ...node,
+      // Handle array fields explicitly to maintain type safety
+      topics: processedData.topics !== undefined 
+        ? processedData.topics as string[] | null
+        : node.topics,
+      questions: processedData.questions !== undefined 
+        ? processedData.questions as string[] | null
+        : node.questions,
+      resources: processedData.resources !== undefined 
+        ? processedData.resources as { title: string; url: string }[] | null
+        : node.resources,
+      equations: processedData.equations !== undefined 
+        ? processedData.equations as string[] | null
+        : node.equations,
+      codeExamples: processedData.codeExamples !== undefined 
+        ? processedData.codeExamples as string[] | null
+        : node.codeExamples,
+      // Handle other non-array fields
+      ...processedData,
+    };
     this.nodes.set(id, updatedNode);
     return updatedNode;
   }

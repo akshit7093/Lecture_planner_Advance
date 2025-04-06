@@ -234,21 +234,38 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     console.log(`Node ${nodeId} has ${item.children.length} children: ${item.children.map(c => c.id).join(', ')}`);
   });
   
-  // Recursively position nodes with increased spacing for better readability
-  const HORIZONTAL_SPACING = 350; // Increased from 250
-  const VERTICAL_SPACING = 200;   // Increased from 150
+  // Recursively position nodes in a HORIZONTAL tree (left to right instead of top-down)
+  const HORIZONTAL_SPACING = 350; // Space between levels (columns)
+  const VERTICAL_SPACING = 150;   // Space between siblings (rows)
+  
+  // First, determine tree depth to better calculate initial positions
+  const getTreeDepth = (nodeId: string, visited = new Set<string>()): number => {
+    if (visited.has(nodeId)) return 0;
+    visited.add(nodeId);
+    
+    const item = nodeMap.get(nodeId);
+    if (!item || item.children.length === 0) return 1;
+    
+    let maxChildDepth = 0;
+    item.children.forEach(child => {
+      const childDepth = getTreeDepth(child.id, visited);
+      maxChildDepth = Math.max(maxChildDepth, childDepth);
+    });
+    
+    return 1 + maxChildDepth;
+  };
   
   const positionNode = (
     nodeId: string, 
-    level: number, 
-    verticalPosition: number,
+    depth: number,      // Horizontal position (X-coordinate column)
+    rowPosition: number, // Vertical position (Y-coordinate row)
     processedNodes: Set<string>
-  ): { verticalSize: number } => {
-    console.log(`Positioning node ${nodeId} at level ${level}, verticalPos ${verticalPosition}`);
+  ): { rowCount: number } => {
+    console.log(`Positioning node ${nodeId} at depth ${depth}, row ${rowPosition}`);
     
     if (processedNodes.has(nodeId)) {
       console.log(`Node ${nodeId} already processed, skipping`);
-      return { verticalSize: 0 };
+      return { rowCount: 0 };
     }
     
     processedNodes.add(nodeId);
@@ -256,56 +273,54 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     const item = nodeMap.get(nodeId);
     if (!item) {
       console.log(`Node ${nodeId} not found in nodeMap, skipping`);
-      return { verticalSize: 0 };
+      return { rowCount: 0 };
     }
     
     const { node, children } = item;
     
-    // Position the current node
+    // Position the current node HORIZONTALLY: x = depth (column), y = row
     node.position = {
-      x: level * HORIZONTAL_SPACING,
-      y: verticalPosition
+      x: depth * HORIZONTAL_SPACING,
+      y: rowPosition * VERTICAL_SPACING
     };
     
     console.log(`Set position of node ${nodeId} to (${node.position.x}, ${node.position.y})`);
     
-    // Position children
-    let currentY = verticalPosition;
-    let totalVerticalSize = 0;
+    // Position children in the next column (depth+1)
+    let currentRow = rowPosition;
+    let totalRowCount = 1; // Start with 1 for current node
     
     children.forEach(childNode => {
       console.log(`Processing child ${childNode.id} of node ${nodeId}`);
       
-      const { verticalSize } = positionNode(
+      const { rowCount } = positionNode(
         childNode.id, 
-        level + 1, 
-        currentY,
+        depth + 1,      // Next column to the right
+        currentRow,     // Start at current row
         processedNodes
       );
       
-      currentY += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
-      totalVerticalSize += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
+      // Move to next row based on how many rows the subtree occupied
+      currentRow += Math.max(1, rowCount);
+      totalRowCount += Math.max(1, rowCount);
     });
     
-    // If no children, return single node height
-    if (children.length === 0) {
-      console.log(`Node ${nodeId} has no children, returning height ${VERTICAL_SPACING}`);
-      return { verticalSize: VERTICAL_SPACING };
-    }
-    
-    console.log(`Node ${nodeId} with children, returning height ${totalVerticalSize}`);
-    return { verticalSize: totalVerticalSize };
+    return { rowCount: Math.max(1, children.length > 0 ? totalRowCount - 1 : 1) };
   };
   
   // Position all root nodes and their descendants
   const processedNodes = new Set<string>();
-  let currentY = 50;
+  let currentRow = 0;
   
   rootNodes.forEach(rootNode => {
     console.log(`Laying out tree from root node ${rootNode.id}`);
     
-    const { verticalSize } = positionNode(rootNode.id, 0, currentY, processedNodes);
-    currentY += verticalSize > 0 ? verticalSize + VERTICAL_SPACING : VERTICAL_SPACING * 2;
+    // Calculate total tree depth to better balance the layout
+    const totalDepth = getTreeDepth(rootNode.id);
+    console.log(`Tree starting from ${rootNode.id} has depth ${totalDepth}`);
+    
+    const { rowCount } = positionNode(rootNode.id, 0, currentRow, processedNodes);
+    currentRow += rowCount + 1; // Add an extra row of spacing between trees
   });
   
   console.log(`Processed ${processedNodes.size} nodes during layout`);
@@ -317,9 +332,9 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
       
       node.position = {
         x: 0,
-        y: currentY
+        y: currentRow * VERTICAL_SPACING
       };
-      currentY += VERTICAL_SPACING;
+      currentRow++;
     }
   });
   
