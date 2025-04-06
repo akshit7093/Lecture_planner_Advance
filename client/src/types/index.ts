@@ -3,9 +3,10 @@ import {
   type Edge as ReactFlowEdge,
   type NodeProps as ReactFlowNodeProps,
   type EdgeMarker,
-  MarkerType
+  MarkerType,
+  Edge
 } from 'reactflow';
-import { Node, Edge, Pathway } from '@shared/schema';
+import { Node as DbNode, Edge as DbEdge, Pathway } from '@shared/schema';
 
 // Extended ReactFlow Node type to include our custom data
 export interface CustomNode extends ReactFlowNode {
@@ -22,23 +23,8 @@ export interface CustomNode extends ReactFlowNode {
   };
 }
 
-// Custom Edge type that matches ReactFlow's expectations
-export interface CustomEdge {
-  id: string;
-  source: string;
-  target: string;
-  type?: string;
-  animated?: boolean;
-  style?: React.CSSProperties;
-  label?: string;
-  data?: {
-    id: number;
-    label?: string;
-  };
-  markerEnd?: MarkerType;
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-}
+// Just use ReactFlow's Edge type directly
+export type CustomEdge = Edge;
 
 // Form for generating a new pathway
 export interface PathwayFormData {
@@ -51,8 +37,8 @@ export interface PathwayFormData {
 // Learning Pathway with all associated data
 export interface CompleteLearningPathway {
   pathway: Pathway;
-  nodes: Node[];
-  edges: Edge[];
+  nodes: DbNode[];
+  edges: DbEdge[];
 }
 
 // SavedPathway for the sidebar list

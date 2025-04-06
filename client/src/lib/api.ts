@@ -7,7 +7,7 @@ import {
   CustomNode,
   CustomEdge
 } from "@/types";
-import { Edge, Node } from "@shared/schema";
+import { Edge as DbEdge, Node as DbNode } from "@shared/schema";
 
 // Pathways API
 export const fetchPathways = async () => {
@@ -47,12 +47,12 @@ export const deletePathway = async (id: number) => {
 };
 
 // Nodes API
-export const updateNode = async (id: number, data: Partial<Node>) => {
+export const updateNode = async (id: number, data: Partial<DbNode>) => {
   const res = await apiRequest('PATCH', `/api/nodes/${id}`, data);
   return res.json();
 };
 
-export const createNode = async (data: Omit<Node, 'id'>) => {
+export const createNode = async (data: Omit<DbNode, 'id'>) => {
   const res = await apiRequest('POST', `/api/nodes`, data);
   return res.json();
 };
@@ -62,12 +62,12 @@ export const deleteNode = async (id: number) => {
 };
 
 // Edges API
-export const updateEdge = async (id: number, data: Partial<Edge>) => {
+export const updateEdge = async (id: number, data: Partial<DbEdge>) => {
   const res = await apiRequest('PATCH', `/api/edges/${id}`, data);
   return res.json();
 };
 
-export const createEdge = async (data: Omit<Edge, 'id'>) => {
+export const createEdge = async (data: Omit<DbEdge, 'id'>) => {
   const res = await apiRequest('POST', `/api/edges`, data);
   return res.json();
 };
@@ -83,7 +83,7 @@ export const enhanceNode = async (data: NodeEnhancementData) => {
 };
 
 // Convert database nodes/edges to ReactFlow format
-export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
+export const convertToReactFlowElements = (nodes: DbNode[], edges: DbEdge[]) => {
   const reactFlowNodes: CustomNode[] = nodes.map((node) => ({
     id: String(node.nodeId), // Ensure ID is a string
     type: 'customNode',
