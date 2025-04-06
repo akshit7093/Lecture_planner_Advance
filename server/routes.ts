@@ -129,8 +129,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pathwayId = parseInt(req.params.pathwayId);
       const nodes = await storage.getNodes(pathwayId);
+      
+      // Debug logging
+      console.log(`Fetched ${nodes.length} nodes for pathway ${pathwayId}`);
+      if (nodes.length > 0) {
+        console.log(`First node: id=${nodes[0].id}, nodeId=${nodes[0].nodeId}, title=${nodes[0].title}`);
+        console.log(`Node IDs: ${nodes.map(n => n.nodeId).join(', ')}`);
+      }
+      
       res.json(nodes);
     } catch (error) {
+      console.error("Failed to fetch nodes:", error);
       res.status(500).json({ message: "Failed to fetch nodes" });
     }
   });
@@ -187,8 +196,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pathwayId = parseInt(req.params.pathwayId);
       const edges = await storage.getEdges(pathwayId);
+      
+      // Debug logging
+      console.log(`Fetched ${edges.length} edges for pathway ${pathwayId}`);
+      if (edges.length > 0) {
+        console.log(`First edge: id=${edges[0].id}, edgeId=${edges[0].edgeId}, source=${edges[0].source}, target=${edges[0].target}`);
+        console.log(`Edge connections: ${edges.map(e => `${e.source}->${e.target}`).join(', ')}`);
+      }
+      
       res.json(edges);
     } catch (error) {
+      console.error("Failed to fetch edges:", error);
       res.status(500).json({ message: "Failed to fetch edges" });
     }
   });

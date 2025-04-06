@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { ReactFlowInstance, useReactFlow, Node, Edge } from 'reactflow';
+import { ReactFlowInstance, useReactFlow, Node, Edge, MarkerType } from 'reactflow';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchPathways, fetchPathway, fetchNodesAndEdges, generatePathway, deletePathway, enhanceNode } from './api';
 import { PathwayFormData, NodeEnhancementData } from '@/types';
@@ -105,8 +105,19 @@ export const usePathwayData = (pathwayId: number | null) => {
     }
     if (nodesAndEdges) {
       console.log("Fetched nodes and edges:", nodesAndEdges);
+      console.log(`Client received ${nodesAndEdges.nodes?.length || 0} nodes for pathway ${pathwayId}`);
+      if (nodesAndEdges.nodes && nodesAndEdges.nodes.length > 0) {
+        console.log(`First node: id=${nodesAndEdges.nodes[0].id}, nodeId=${nodesAndEdges.nodes[0].nodeId}, title=${nodesAndEdges.nodes[0].title}`);
+        console.log(`Node IDs: ${nodesAndEdges.nodes.map((n: { nodeId: string }) => n.nodeId).join(', ')}`);
+      }
+      
+      console.log(`Client received ${nodesAndEdges.edges?.length || 0} edges for pathway ${pathwayId}`);
+      if (nodesAndEdges.edges && nodesAndEdges.edges.length > 0) {
+        console.log(`First edge: id=${nodesAndEdges.edges[0].id}, edgeId=${nodesAndEdges.edges[0].edgeId}, source=${nodesAndEdges.edges[0].source}, target=${nodesAndEdges.edges[0].target}`);
+        console.log(`Edge connections: ${nodesAndEdges.edges.map((e: { source: string, target: string }) => `${e.source}->${e.target}`).join(', ')}`);
+      }
     }
-  }, [error, nodesAndEdges]);
+  }, [error, nodesAndEdges, pathwayId]);
   
   // Node enhancement mutation
   const queryClient = useQueryClient();
@@ -239,16 +250,11 @@ export const useAddNode = () => {
       style: {
         stroke: '#718096',
       },
-      markerEnd: {
-        type: 'arrowclosed',
-        width: 20,
-        height: 20,
-        color: '#718096',
-      },
+      markerEnd: MarkerType.ArrowClosed,
     };
     
     // Add the new edge
-    setEdges(edges => [...edges, newEdge]);
+    setEdges(edges => [...edges, newEdge as any]);
     
     toast({
       title: "Success",

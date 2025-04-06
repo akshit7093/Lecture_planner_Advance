@@ -80,11 +80,15 @@ const FlowCanvas = ({
     
     // Process even if we only have nodes but no edges
     if (dbNodes.length > 0) {
+      // For troubleshooting, log the database nodes
+      console.log("Original DB nodes:", JSON.stringify(dbNodes));
+      console.log("Original DB edges:", JSON.stringify(dbEdges));
+      
       const elements = convertToReactFlowElements(dbNodes, dbEdges);
-      console.log("Converted elements:", elements);
+      console.log("Converted elements:", JSON.stringify(elements));
       
       const layoutedNodes = layoutNodes(elements.nodes, elements.edges);
-      console.log("Layouted nodes:", layoutedNodes);
+      console.log("Layouted nodes:", JSON.stringify(layoutedNodes));
       
       setNodes(layoutedNodes);
       setEdges(elements.edges);
