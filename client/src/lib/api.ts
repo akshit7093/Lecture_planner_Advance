@@ -1,4 +1,5 @@
 import { apiRequest } from "./queryClient";
+import { MarkerType } from 'reactflow';
 import { 
   PathwayFormData, 
   CompleteLearningPathway,
@@ -84,7 +85,7 @@ export const enhanceNode = async (data: NodeEnhancementData) => {
 // Convert database nodes/edges to ReactFlow format
 export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
   const reactFlowNodes: CustomNode[] = nodes.map((node) => ({
-    id: node.nodeId,
+    id: String(node.nodeId), // Ensure ID is a string
     type: 'customNode',
     position: node.position as { x: number, y: number },
     data: {
@@ -101,9 +102,9 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
   }));
 
   const reactFlowEdges: CustomEdge[] = edges.map((edge) => ({
-    id: edge.edgeId,
-    source: edge.source,
-    target: edge.target,
+    id: String(edge.edgeId), // Ensure ID is a string
+    source: String(edge.source), // Ensure source is a string
+    target: String(edge.target), // Ensure target is a string
     type: 'smoothstep',
     animated: edge.animated === 1,
     label: edge.label || undefined,
@@ -111,12 +112,7 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
       id: edge.id,
       label: edge.label || undefined,
     },
-    markerEnd: {
-      type: 'arrowclosed',
-      width: 20,
-      height: 20,
-      color: '#718096',
-    },
+    markerEnd: MarkerType.ArrowClosed,
     style: {
       stroke: '#718096',
     },
@@ -136,7 +132,7 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
   });
   
   // Find root nodes (nodes without parents)
-  let rootNodes: CustomNode[] = [...nodeMap.values()]
+  let rootNodes: CustomNode[] = Array.from(nodeMap.values())
     .map(item => item.node)
     .filter(node => {
       // A node is a root if no edge has it as a target

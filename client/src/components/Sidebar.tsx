@@ -193,7 +193,7 @@ const Sidebar = ({ collapsed, toggleSidebar, onPathwaySelect, selectedPathwayId 
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gemini-2.5-pro-exp-03-25">google/gemini-2.5-pro-exp-03-25:free</SelectItem>
+                <SelectItem value="meta-llama/llama-3.2-3b-instruct:free">meta-llama/llama-3.2-3b-instruct:free</SelectItem>
               </SelectContent>
             </Select>
           </div>

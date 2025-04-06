@@ -14,10 +14,11 @@ import ReactFlow, {
   Panel,
   ConnectionMode,
   EdgeMarker,
+  useReactFlow,
 } from 'reactflow';
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PlusCircle, Link2, Trash2, RefreshCw } from 'lucide-react';
+import { PlusCircle, Link2, Trash2, RefreshCw, Home, LayoutGrid } from 'lucide-react';
 import NodeComponent from './Node';
 import { Node as DbNode, Edge as DbEdge } from '@shared/schema';
 import { convertToReactFlowElements, layoutNodes } from '@/lib/api';
@@ -254,6 +255,58 @@ const FlowCanvas = ({
     }
   }, [nodes, edges, reactFlowInstance]);
   
+  // Go to the root node (Home button functionality)
+  const goToRootNode = useCallback(() => {
+    // Find the root node (usually the first one with no parent or with id containing 'root')
+    const rootNode = nodes.find(n => 
+      n.id.includes('root') || 
+      !edges.some(e => e.target === n.id)
+    );
+    
+    if (rootNode && reactFlowInstance) {
+      // Reset styles first
+      resetView();
+      
+      // Then focus on the root node
+      setTimeout(() => {
+        reactFlowInstance.fitView({
+          padding: 0.5,
+          duration: 800,
+          nodes: [rootNode]
+        });
+        
+        // Highlight the root node
+        setNodes(nodes.map(n => ({
+          ...n,
+          style: {
+            ...n.style,
+            boxShadow: n.id === rootNode.id ? '0 0 12px 4px #2B6CB0' : undefined
+          }
+        })));
+      }, 100);
+    }
+  }, [nodes, edges, reactFlowInstance, resetView]);
+  
+  // Reset the layout to original positions
+  const resetLayout = useCallback(() => {
+    if (dbNodes.length > 0) {
+      // Convert and re-layout
+      const elements = convertToReactFlowElements(dbNodes, dbEdges);
+      const layoutedNodes = layoutNodes(elements.nodes, elements.edges);
+      
+      // Apply the new layout
+      setNodes(layoutedNodes);
+      setEdges(elements.edges);
+      
+      // Fit view
+      if (reactFlowInstance) {
+        setTimeout(() => {
+          reactFlowInstance.fitView({ padding: 0.2, duration: 800 });
+        }, 50);
+      }
+    }
+  }, [dbNodes, dbEdges, reactFlowInstance]);
+  
   return (
     <div className="flex-1 overflow-hidden relative" ref={reactFlowWrapper}>
       <ReactFlow
@@ -343,6 +396,22 @@ const FlowCanvas = ({
             disabled={!selectedNode}
           >
             <Trash2 className="h-4 w-4 mr-1" /> Delete
+          </Button>
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex items-center bg-blue-600 text-white hover:bg-blue-700" 
+            onClick={goToRootNode}
+          >
+            <Home className="h-4 w-4 mr-1" /> Home
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center" 
+            onClick={resetLayout}
+          >
+            <LayoutGrid className="h-4 w-4 mr-1" /> Reset Layout
           </Button>
           <Button 
             variant="outline" 

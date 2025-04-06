@@ -12,7 +12,7 @@ export interface CustomNode extends ReactFlowNode {
   data: {
     id: number;
     label: string;
-    description?: string;
+    description?: string | null;
     topics?: string[];
     questions?: string[];
     resources?: { title: string; url: string }[];
@@ -35,7 +35,7 @@ export interface CustomEdge {
     id: number;
     label?: string;
   };
-  markerEnd?: EdgeMarker;
+  markerEnd?: MarkerType;
   sourceHandle?: string | null;
   targetHandle?: string | null;
 }

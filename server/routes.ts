@@ -20,6 +20,19 @@ function sanitizeNodeData(node: any): any {
   // Make a deep copy to avoid modifying the original
   const sanitized = {...node};
   
+  // Convert ID fields to string to ensure consistency
+  if (sanitized.id !== undefined) {
+    sanitized.nodeId = String(sanitized.id);
+    delete sanitized.id; // We'll use our database's auto-generated ID
+  } else if (sanitized.nodeId !== undefined) {
+    sanitized.nodeId = String(sanitized.nodeId);
+  }
+  
+  // Ensure parentId is properly handled
+  if (sanitized.parentId !== undefined && sanitized.parentId !== null) {
+    sanitized.parentId = String(sanitized.parentId);
+  }
+  
   // Sanitize code examples
   if (sanitized.codeExamples && Array.isArray(sanitized.codeExamples)) {
     sanitized.codeExamples = sanitized.codeExamples.map((code: string) => {
@@ -242,7 +255,7 @@ app.post('/api/generate', async (req, res) => {
       timeDescription = validated.timespan;
     }
     
-    const prompt = `Create a learning pathway for "${validated.topic}" with ${timeDescription} timespan at ${validated.complexity} level.
+    const prompt = `Create a comprehensive learning pathway for "${validated.topic}" with ${timeDescription} timespan at ${validated.complexity} level. Make this extremely detailed with many nodes for a rich learning experience.
     
 The response should be a JSON object with the following structure:
 {
@@ -252,24 +265,24 @@ The response should be a JSON object with the following structure:
       "id": "unique-id-1",
       "parentId": null, // null for root nodes
       "title": "Node title",
-      "description": "Brief description of this topic",
-      "topics": ["key topic 1", "key topic 2"], // Array of key topics
-      "questions": ["previous year question 1", "previous year question 2"], // Array of questions
-      "resources": [{"title": "Resource title", "url": "https://example.com"}], // Array of resources
+      "description": "Detailed description of this topic (at least 2-3 sentences)",
+      "topics": ["key topic 1", "key topic 2", "key topic 3", "key topic 4", "key topic 5"], // At least 5 key topics per node
+      "questions": ["previous year question 1", "previous year question 2", "practice question 3"], // Include several questions
+      "resources": [{"title": "Resource title", "url": "https://example.com"}], // Add multiple resources with valid URLs
       "equations": ["E = mc^2"], // Array of mathematical equations (if applicable)
-      "codeExamples": ["code example here"], // Array of code examples (if applicable)
+      "codeExamples": ["code example here"], // Add detailed code examples with proper formatting
       "position": {"x": 0, "y": 0} // Relative position (we'll adjust this on the frontend)
     },
     {
       "id": "unique-id-2",
       "parentId": "unique-id-1", // Reference to parent node
       "title": "Subtopic title",
-      "description": "Description of subtopic",
-      "topics": ["subtopic 1", "subtopic 2"],
-      "questions": [],
-      "resources": [],
-      "equations": [],
-      "codeExamples": [],
+      "description": "Thorough description of subtopic with specific details",
+      "topics": ["subtopic 1", "subtopic 2", "subtopic 3", "subtopic 4", "subtopic 5"],
+      "questions": ["question 1", "question 2", "question 3"],
+      "resources": [{"title": "Resource for subtopic", "url": "https://example.com/subtopic"}],
+      "equations": ["Related equation"],
+      "codeExamples": ["Specific code example for this subtopic"],
       "position": {"x": 0, "y": 0}
     }
     // Additional nodes...
@@ -286,7 +299,21 @@ The response should be a JSON object with the following structure:
   ]
 }
 
-Ensure there are at least 5-10 nodes with various content types appropriate for the topic (include questions, equations if relevant, code examples if relevant, and resources). Structure the nodes in a hierarchical way that makes sense for learning the topic progressively.`;
+Important requirements:
+1. Create at least 10-15 nodes with various content types appropriate for the topic
+2. Each node should include at least:
+   - 5+ key topics
+   - 3+ detailed questions
+   - 2+ relevant resources with valid URLs
+   - Mathematical equations if relevant to the subject
+   - Code examples if relevant to the subject (properly formatted)
+3. Give descriptive labels to edges showing the relationship
+4. Structure the nodes in a hierarchical way with a clear root node and branching subtopics
+5. Include detail nodes for each main concept that dive deeper into the material
+6. Use simple unique-id strings that include meaningful prefixes related to the content (e.g., "blockchain-root", "month1-introduction", etc.)
+7. Make node titles and descriptions genuinely informative - avoid generic placeholders
+
+The learning pathway should represent a complete educational roadmap that someone could follow to master the topic.`;
 
     // Step 3: Check API configuration
     const { MODEL_NAME, OPENROUTER_API_KEY, OPENROUTER_BASE_URL } = config.api;
