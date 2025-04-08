@@ -8,34 +8,42 @@ import {
 import { Node, Edge, Pathway } from '@shared/schema';
 
 // Extended ReactFlow Node type to include our custom data
-export interface CustomNode extends ReactFlowNode {
+export interface CustomNode extends Omit<ReactFlowNode, 'data'> {
+  id: string;
+  type: 'customNode';
+  position: { x: number; y: number };
   data: {
     id: number;
     label: string;
-    description?: string;
-    topics?: string[];
-    questions?: string[];
-    resources?: { title: string; url: string }[];
-    equations?: string[];
-    codeExamples?: string[];
-    isExpanded?: boolean;
+    description: string | null;
+    topics: string[] | null;
+    questions: string[] | null;
+    resources: { title: string; url: string }[] | null;
+    equations: string[] | null;
+    codeExamples: string[] | null;
+    isExpanded: boolean;
   };
 }
 
 // Custom Edge type that matches ReactFlow's expectations
-export interface CustomEdge {
+export interface CustomEdge extends Omit<ReactFlowEdge, 'markerEnd'> {
   id: string;
   source: string;
   target: string;
-  type?: string;
-  animated?: boolean;
-  style?: React.CSSProperties;
+  type: 'smoothstep';
+  animated: boolean;
+  style: React.CSSProperties;
   label?: string;
-  data?: {
+  data: {
     id: number;
-    label?: string;
+    label: string | undefined;
   };
-  markerEnd?: EdgeMarker;
+  markerEnd: {
+    type: MarkerType;
+    width: number;
+    height: number;
+    color: string;
+  };
   sourceHandle?: string | null;
   targetHandle?: string | null;
 }

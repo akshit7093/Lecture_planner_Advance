@@ -7,6 +7,7 @@ import {
   CustomEdge
 } from "@/types";
 import { Edge, Node } from "@shared/schema";
+import { MarkerType } from "reactflow";
 
 // Pathways API
 export const fetchPathways = async () => {
@@ -90,12 +91,12 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
     data: {
       id: node.id,
       label: node.title,
-      description: node.description,
-      topics: node.topics as string[] | undefined,
-      questions: node.questions as string[] | undefined,
-      resources: node.resources as { title: string, url: string }[] | undefined,
-      equations: node.equations as string[] | undefined,
-      codeExamples: node.codeExamples as string[] | undefined,
+      description: node.description ?? null,
+      topics: node.topics ?? null,
+      questions: node.questions ?? null,
+      resources: node.resources ?? null,
+      equations: node.equations ?? null,
+      codeExamples: node.codeExamples ?? null,
       isExpanded: false,
     },
   }));
@@ -106,13 +107,13 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
     target: edge.target,
     type: 'smoothstep',
     animated: edge.animated === 1,
-    label: edge.label || undefined,
+    label: edge.label ?? undefined,
     data: {
       id: edge.id,
-      label: edge.label || undefined,
+      label: edge.label ?? undefined,
     },
     markerEnd: {
-      type: 'arrowclosed',
+      type: MarkerType.ArrowClosed,
       width: 20,
       height: 20,
       color: '#718096',
@@ -120,6 +121,8 @@ export const convertToReactFlowElements = (nodes: Node[], edges: Edge[]) => {
     style: {
       stroke: '#718096',
     },
+    sourceHandle: null,
+    targetHandle: null
   }));
 
   return { nodes: reactFlowNodes, edges: reactFlowEdges };
@@ -136,7 +139,7 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
   });
   
   // Find root nodes (nodes without parents)
-  let rootNodes: CustomNode[] = [...nodeMap.values()]
+  let rootNodes: CustomNode[] = Array.from(nodeMap.values())
     .map(item => item.node)
     .filter(node => {
       // A node is a root if no edge has it as a target
@@ -157,11 +160,32 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
       sourceItem.children.push(targetNode);
     }
   });
+
+  // Calculate node dimensions based on content
+  const getNodeDimensions = (node: CustomNode) => {
+    const baseWidth = 250;
+    const baseHeight = 150;
+    const contentLength = (
+      node.data.label.length +
+      (node.data.description?.length ?? 0) +
+      (node.data.topics?.join('').length ?? 0)
+    );
+    return {
+      width: Math.max(baseWidth, Math.min(400, baseWidth + contentLength * 0.5)),
+      height: Math.max(baseHeight, Math.min(300, baseHeight + contentLength * 0.3))
+    };
+  };
+
+  // Dynamic spacing based on node dimensions
+  const getSpacing = (node: CustomNode) => {
+    const { width, height } = getNodeDimensions(node);
+    return {
+      horizontal: Math.max(400, width * 1.5),
+      vertical: Math.max(250, height * 1.5)
+    };
+  };
   
-  // Recursively position nodes with increased spacing for better readability
-  const HORIZONTAL_SPACING = 350; // Increased from 250
-  const VERTICAL_SPACING = 200;   // Increased from 150
-  
+  // Recursively position nodes with dynamic spacing
   const positionNode = (
     nodeId: string, 
     level: number, 
@@ -175,18 +199,23 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
     if (!item) return { verticalSize: 0 };
     
     const { node, children } = item;
+    const spacing = getSpacing(node);
     
     // Position the current node
     node.position = {
-      x: level * HORIZONTAL_SPACING,
+      x: level * spacing.horizontal,
       y: verticalPosition
     };
     
-    // Position children
+    // Position children with dynamic spacing
     let currentY = verticalPosition;
     let totalVerticalSize = 0;
+    let maxChildWidth = 0;
     
     children.forEach(childNode => {
+      const childSpacing = getSpacing(childNode);
+      maxChildWidth = Math.max(maxChildWidth, childSpacing.horizontal);
+      
       const { verticalSize } = positionNode(
         childNode.id, 
         level + 1, 
@@ -194,16 +223,28 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
         processedNodes
       );
       
-      currentY += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
-      totalVerticalSize += verticalSize > 0 ? verticalSize : VERTICAL_SPACING;
+      const effectiveSpacing = Math.max(
+        childSpacing.vertical,
+        verticalSize > 0 ? verticalSize : spacing.vertical
+      );
+      
+      currentY += effectiveSpacing;
+      totalVerticalSize += effectiveSpacing;
     });
     
-    // If no children, return single node height
-    if (children.length === 0) {
-      return { verticalSize: VERTICAL_SPACING };
+    // Adjust child positions to be centered relative to parent
+    if (children.length > 0) {
+      const totalHeight = totalVerticalSize;
+      const centerY = verticalPosition + totalHeight / 2;
+      const firstChildY = children[0].position.y;
+      const offset = centerY - (firstChildY + totalHeight / 2);
+      
+      children.forEach(childNode => {
+        childNode.position.y += offset;
+      });
     }
     
-    return { verticalSize: totalVerticalSize };
+    return { verticalSize: children.length === 0 ? spacing.vertical : totalVerticalSize };
   };
   
   // Position all root nodes and their descendants
@@ -211,18 +252,20 @@ export const layoutNodes = (nodes: CustomNode[], edges: CustomEdge[]) => {
   let currentY = 50;
   
   rootNodes.forEach(rootNode => {
+    const spacing = getSpacing(rootNode);
     const { verticalSize } = positionNode(rootNode.id, 0, currentY, processedNodes);
-    currentY += verticalSize > 0 ? verticalSize + VERTICAL_SPACING : VERTICAL_SPACING * 2;
+    currentY += verticalSize > 0 ? verticalSize + spacing.vertical : spacing.vertical * 2;
   });
   
-  // Handle any remaining unprocessed nodes (in case of disconnected components)
+  // Handle any remaining unprocessed nodes
   nodes.forEach(node => {
     if (!processedNodes.has(node.id)) {
+      const spacing = getSpacing(node);
       node.position = {
         x: 0,
         y: currentY
       };
-      currentY += VERTICAL_SPACING;
+      currentY += spacing.vertical;
     }
   });
   

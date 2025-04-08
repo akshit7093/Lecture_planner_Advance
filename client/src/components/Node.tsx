@@ -9,7 +9,11 @@ import {
   MoreHorizontal,
   ChevronDown, 
   ChevronUp, 
-  ExternalLink 
+  ExternalLink,
+  Clock,
+  BookOpen,
+  Code,
+  FileText
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -21,6 +25,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { CustomNode } from '@/types';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
+import './Node.css';
 
 interface NodeComponentProps extends NodeProps {
   data: CustomNode['data'];
@@ -65,12 +70,10 @@ const NodeComponent = ({
         className="w-3 h-3 bg-gray-400"
       />
       
-      <Card className="shadow-sm border-gray-200 transition-shadow max-w-md hover:shadow-md">
-        <CardHeader className="py-3 px-4">
-          <div className="flex justify-between items-start mb-1">
-            <CardTitle className={isExpanded ? "text-lg" : "text-base"}>
-              {data.label}
-            </CardTitle>
+      <Card className="node-card">
+        <CardHeader className="node-header">
+          <div className="flex justify-between items-start">
+            <h3 className="node-title">{data.label}</h3>
             <div className="flex space-x-1">
               <Button 
                 variant="ghost" 
@@ -105,21 +108,22 @@ const NodeComponent = ({
           </div>
         </CardHeader>
         
-        <CardContent className="px-4 pb-3">
+        <CardContent className="node-description">
           {data.description && (
-            <p className="text-sm text-gray-700 mb-3">{data.description}</p>
+            <p>{data.description}</p>
           )}
           
           <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
             {/* Always show key topics if available */}
             {data.topics && data.topics.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs uppercase font-medium text-gray-500 mb-1">Key Topics</div>
+              <div className="node-section">
+                <div className="node-section-title">
+                  <BookOpen className="inline-block w-4 h-4 mr-1" />
+                  Key Topics
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {data.topics.map((topic, index) => (
-                    <Badge key={index} variant="secondary" className="px-2 py-0.5 bg-primary/10 text-primary text-xs">
-                      {topic}
-                    </Badge>
+                    <span key={index} className="topic-badge">{topic}</span>
                   ))}
                 </div>
               </div>
@@ -128,30 +132,37 @@ const NodeComponent = ({
             <CollapsibleContent>
               {/* Questions section */}
               {data.questions && data.questions.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs uppercase font-medium text-gray-500 mb-1">Previous Year Questions</div>
-                  <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside">
+                <div className="node-section">
+                  <div className="node-section-title">
+                    <FileText className="inline-block w-4 h-4 mr-1" />
+                    Previous Year Questions
+                  </div>
+                  <div className="space-y-2">
                     {data.questions.map((question, index) => (
-                      <li key={index}>{question}</li>
+                      <div key={index} className="question-item">{question}</div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
               
               {/* Resources section */}
               {data.resources && data.resources.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs uppercase font-medium text-gray-500 mb-1">Resources</div>
-                  <div className="space-y-1">
+                <div className="node-section">
+                  <div className="node-section-title">
+                    <ExternalLink className="inline-block w-4 h-4 mr-1" />
+                    Learning Resources
+                  </div>
+                  <div className="space-y-2">
                     {data.resources.map((resource, index) => (
                       <a 
                         key={index} 
                         href={resource.url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-xs text-primary flex items-center hover:underline"
+                        className="resource-link"
                       >
-                        <ExternalLink className="h-3 w-3 mr-1" /> {resource.title}
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        <span>{resource.title}</span>
                       </a>
                     ))}
                   </div>
@@ -160,11 +171,14 @@ const NodeComponent = ({
               
               {/* Equations section */}
               {data.equations && data.equations.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs uppercase font-medium text-gray-500 mb-1">Mathematical Equations</div>
-                  <div className="bg-gray-50 p-2 rounded">
+                <div className="node-section">
+                  <div className="node-section-title">
+                    <Clock className="inline-block w-4 h-4 mr-1" />
+                    Mathematical Equations
+                  </div>
+                  <div className="equation-container">
                     {data.equations.map((equation, index) => (
-                      <div key={index} className="mathematical-equation text-sm font-mono">
+                      <div key={index} className="mathematical-equation">
                         {renderEquation(equation)}
                       </div>
                     ))}
@@ -174,26 +188,25 @@ const NodeComponent = ({
               
               {/* Code examples section */}
               {data.codeExamples && data.codeExamples.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs uppercase font-medium text-gray-500 mb-1">Code Examples</div>
-                  <pre className="bg-gray-50 p-2 rounded text-xs font-mono overflow-x-auto">
+                <div className="node-section">
+                  <div className="node-section-title">
+                    <Code className="inline-block w-4 h-4 mr-1" />
+                    Code Examples
+                  </div>
+                  <div className="code-container">
                     {data.codeExamples.map((code, index) => (
-                      <code key={index} className="block mb-1">
+                      <code key={index} className="block mb-2">
                         {code}
                       </code>
                     ))}
-                  </pre>
+                  </div>
                 </div>
               )}
             </CollapsibleContent>
             
             {/* Toggle button to expand/collapse */}
             <CollapsibleTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="w-full flex items-center justify-center mt-2 py-1 text-xs"
-              >
+              <Button className="expand-button">
                 {isExpanded ? (
                   <>Show Less <ChevronUp className="h-3 w-3 ml-1" /></>
                 ) : (

@@ -1,5 +1,79 @@
-// OpenRouter API integration for AI content generation
-app.post('/api/generate', async (req, res) => {
+import express from 'express';
+import { z } from 'zod';
+import axios from 'axios';
+import { nanoid } from 'nanoid';
+import config from './server/config';
+import { storage } from './server/storage';
+
+// Define request validation schema
+const openRouterRequestSchema = z.object({
+  topic: z.string(),
+  timespan: z.string(),
+  complexity: z.string(),
+  customDays: z.number().optional()
+});
+
+// Define types for node and edge data
+interface NodeData {
+  id: string;
+  parentId: string | null;
+  title: string;
+  description: string;
+  position: { x: number; y: number };
+  topics: string[];
+  questions: string[];
+  resources: Array<{ title: string; url: string }>;
+  equations: string[];
+  codeExamples: string[];
+  nodeType?: string;
+  metadata?: Record<string, any>;
+}
+
+interface EdgeData {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  animated: boolean | number;
+}
+
+// Node data sanitization function
+function sanitizeNodeData(nodeData: any): NodeData {
+  return {
+    id: typeof nodeData.id === 'string' ? nodeData.id : `node-${Date.now()}`,
+    parentId: typeof nodeData.parentId === 'string' ? nodeData.parentId : null,
+    title: typeof nodeData.title === 'string' ? nodeData.title : 'Untitled Node',
+    description: typeof nodeData.description === 'string' ? nodeData.description : '',
+    position: nodeData.position && typeof nodeData.position === 'object'
+      ? {
+        x: typeof nodeData.position.x === 'number' ? nodeData.position.x : 0,
+        y: typeof nodeData.position.y === 'number' ? nodeData.position.y : 0
+      }
+      : { x: 0, y: 0 },
+    topics: Array.isArray(nodeData.topics)
+      ? nodeData.topics.filter((t: any) => typeof t === 'string')
+      : [],
+    questions: Array.isArray(nodeData.questions)
+      ? nodeData.questions.filter((q: any) => typeof q === 'string')
+      : [],
+    resources: Array.isArray(nodeData.resources)
+      ? nodeData.resources.filter((r: any) =>
+        r && typeof r.title === 'string' && typeof r.url === 'string')
+      : [],
+    equations: Array.isArray(nodeData.equations)
+      ? nodeData.equations.filter((e: any) => typeof e === 'string')
+      : [],
+    codeExamples: Array.isArray(nodeData.codeExamples)
+      ? nodeData.codeExamples.filter((c: any) => typeof c === 'string')
+      : [],
+    nodeType: typeof nodeData.nodeType === 'string' ? nodeData.nodeType : 'default',
+    metadata: typeof nodeData.metadata === 'object' ? nodeData.metadata : {}
+  };
+}
+
+// Express app setup and endpoint registration
+export function registerGenerateEndpoint(app: express.Express) {
+  app.post('/api/generate', async (req, res) => {
   try {
     // Step 1: Validate request data
     const validated = openRouterRequestSchema.parse(req.body);
@@ -377,7 +451,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         codeExamples: sanitizedNode.codeExamples || [],
         metadata: {}
       });
-      createdNodes.push(node);
+      createdNodes.push(node as never);
     }
 
     // Step 10: Create all edges
@@ -391,7 +465,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         label: edgeData.label || "",
         animated: edgeData.animated ? 1 : 0
       });
-      createdEdges.push(edge);
+      createdEdges.push(edge as never);
     }
 
     // Step 11: Return the complete pathway with nodes and edges
@@ -404,20 +478,22 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
   } catch (error) {
     console.error("Generation error:", error);
     
-    if (error instanceof ZodError) {
-      return res.status(400).json({ message: "Invalid request data", errors: error.errors });
-    }
-    
-    if (axios.isAxiosError(error)) {
-      return res.status(500).json({ 
-        message: "OpenRouter API call failed", 
-        error: error.response?.data || error.message 
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: "Invalid request data",
+        errors: error.errors
+      });
+    } else if (axios.isAxiosError(error)) {
+      return res.status(error.response?.status || 500).json({
+        message: "API request failed",
+        error: error.message
       });
     }
     
-    res.status(500).json({ 
-      message: "Failed to generate learning pathway",
-      error: (error as Error).message
+    return res.status(500).json({
+      message: "An unexpected error occurred",
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
+}

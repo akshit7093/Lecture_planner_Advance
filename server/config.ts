@@ -4,7 +4,7 @@
 // API Configuration
 export const API_CONFIG = {
   // OpenRouter API key
-  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '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',
   
   // Model to use for AI-powered content generation
   MODEL_NAME: process.env.MODEL_NAME || 'google/gemini-2.5-pro-exp-03-25:free',
