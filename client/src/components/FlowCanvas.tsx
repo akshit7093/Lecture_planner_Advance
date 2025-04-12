@@ -259,7 +259,7 @@ const onConnect = useCallback((connection: Connection) => {
   // Toggle connection mode
   // Toggle connection mode
   const toggleConnectionMode = useCallback(() => {
-    setConnectionMode(prev => prev === 'default' ? 'strict' : 'default');
+    setConnectionMode(prev => prev === ConnectionMode.Default ? ConnectionMode.Loose : ConnectionMode.Default);
   }, []);
 
   // Delete selected node
@@ -341,6 +341,7 @@ const onConnect = useCallback((connection: Connection) => {
         nodesDraggable={true}
         zoomOnScroll={true}
         panOnScroll={true}
+        minZoom={0.5} // Add this line to set minimum zoom to 50%
         fitView
       >
         <Background color="#e2e8f0" gap={16} />

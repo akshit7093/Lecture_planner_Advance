@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import { Suspense } from "react";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function Router() {
   return (
@@ -17,10 +18,10 @@ function Router() {
 
 function App() {
   return (
-    <>
+    <ThemeProvider defaultTheme="system">
       <Router />
       <Toaster />
-    </>
+    </ThemeProvider>
   );
 }
 

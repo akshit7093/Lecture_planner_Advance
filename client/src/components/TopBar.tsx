@@ -7,13 +7,14 @@ import {
   ZoomIn, 
   ZoomOut, 
   Maximize, 
-  Settings 
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useFlowControls } from "@/lib/hooks";
 import { ReactFlowInstance } from "reactflow";
+import { ThemeToggle } from "@/components/theme-provider";
 
 interface TopBarProps {
   title: string;
@@ -84,6 +85,8 @@ const TopBar = ({
         <Button variant="ghost" size="icon" title="Settings">
           <Settings className="h-4 w-4" />
         </Button>
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        <ThemeToggle />
       </div>
     </div>
   );

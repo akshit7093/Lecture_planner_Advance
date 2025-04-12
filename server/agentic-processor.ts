@@ -191,32 +191,52 @@ export async function generateInitialResponse(
   console.log(`Generating initial response using model: ${MODEL_NAME}`);
   console.log(`Topic: ${topic}, Timespan: ${timeDescription}, Complexity: ${complexity}`);
 
+  // const validated = openRouterRequestSchema.parse(req.body);
   const prompt = `Create a learning pathway for "${topic}" with ${timeDescription} timespan at ${complexity} level.
-  The response should be a JSON object with the following structure:
-  {
-    "title": "Main topic title",
-    "nodes": [
-      {
-        "id": "unique-id-1",
-        "title": "Node title",
-        "description": "Detailed description",
-        "position": {"x": 0, "y": 0},
-        "topics": ["topic1", "topic2"],
-        "questions": ["question1?", "question2?"],
-        "resources": [{"title": "Resource name", "url": "https://example.com"}]
-      }
-    ],
-    "edges": [
-      {
-        "id": "unique-edge-id",
-        "source": "source-node-id",
-        "target": "target-node-id",
-        "label": "Optional connection label"
-      }
-    ]
-  }
-  
-  Ensure all nodes have valid position objects with x and y coordinates, and all edges reference existing node IDs.`;
+    
+The response should be a JSON object with the following structure:
+{
+  "title": "Main topic title",
+  "nodes": [
+    {
+      "id": "unique-id-1",
+      "parentId": null, // null for root nodes
+      "title": "Node title",
+      "description": "Brief description of this topic",
+      "topics": ["key topic 1", "key topic 2"], // Array of key topics
+      "questions": ["previous year question 1", "previous year question 2"], // Array of questions
+      "resources": [{"title": "Resource title", "url": "https://example.com"}], // Array of resources
+      "equations": ["E = mc^2"], // Array of mathematical equations (if applicable)
+      "codeExamples": ["code example here"], // Array of code examples (if applicable)
+      "position": {"x": 0, "y": 0} // Relative position (we'll adjust this on the frontend)
+    },
+    {
+      "id": "unique-id-2",
+      "parentId": "unique-id-1", // Reference to parent node
+      "title": "Subtopic title",
+      "description": "Description of subtopic",
+      "topics": ["subtopic 1", "subtopic 2"],
+      "questions": [],
+      "resources": [],
+      "equations": [],
+      "codeExamples": [],
+      "position": {"x": 0, "y": 0}
+    }
+    // Additional nodes...
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "unique-id-1",
+      "target": "unique-id-2",
+      "label": "relates to",
+      "animated": false
+    }
+    // Additional edges...
+  ]
+}
+
+Ensure there are at least 5-10 nodes with various content types appropriate for the topic (include questions, equations if relevant, code examples if relevant, and resources). Structure the nodes in a hierarchical way that makes sense for learning the topic progressively.`;
 
   try {
     const response = await axios.post(

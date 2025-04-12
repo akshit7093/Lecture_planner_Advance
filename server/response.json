@@ -1,0 +1,136 @@
+{
+    "title": "Advanced Specialized Language Models (20-Day Learning Pathway)",
+    "nodes": [
+      {
+        "id": "slm-1",
+        "parentId": null,
+        "title": "Introduction to Specialized Language Models",
+        "description": "Overview of SLMs, their differences from general-purpose LLMs, and the motivations for their development. Focus on the trade-offs between generality and specialization.",
+        "topics": ["SLM Definition", "General vs. Specialized LLMs", "Domain Adaptation", "Fine-tuning Strategies"],
+        "questions": ["What are the key benefits of using an SLM over a general LLM for a specific task?", "Describe the challenges associated with domain adaptation."],
+        "resources": [{"title": "Stanford NLP - Domain Adaptation", "url": "https://nlp.stanford.edu/courses/cs224n/2019/notes/domain-adaptation/"}],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": 0, "y": 0}
+      },
+      {
+        "id": "slm-2",
+        "parentId": "slm-1",
+        "title": "Data Engineering for SLMs",
+        "description": "Focus on data collection, cleaning, and preparation for training SLMs.  Emphasis on quality and relevance of data.",
+        "topics": ["Data Sources", "Data Cleaning Techniques", "Data Augmentation", "Data Annotation"],
+        "questions": ["How does the quality of training data impact the performance of an SLM?", "Describe different data augmentation techniques applicable to text data."],
+        "resources": [{"title": "Snorkel AI - Data Programming", "url": "https://snorkel.org/"}],
+        "equations": [],
+        "codeExamples": ["# Example data cleaning using Python\\nimport re\\ndef clean_text(text):\\n  text = re.sub(r'[^\\w\\s]', '', text)\\n  return text.lower()"],
+        "position": {"x": 200, "y": 100}
+      },
+      {
+        "id": "slm-3",
+        "parentId": "slm-1",
+        "title": "Fine-tuning Techniques",
+        "description": "Detailed exploration of various fine-tuning methods, including full fine-tuning, parameter-efficient fine-tuning (PEFT) like LoRA, and adapter modules.",
+        "topics": ["Full Fine-tuning", "LoRA (Low-Rank Adaptation)", "Adapter Modules", "Prompt Tuning"],
+        "questions": ["What are the advantages and disadvantages of full fine-tuning compared to PEFT methods?", "Explain how LoRA reduces the number of trainable parameters."],
+        "resources": [{"title": "Hugging Face PEFT Library", "url": "https://github.com/huggingface/peft"}],
+        "equations": [],
+        "codeExamples": ["# Example LoRA configuration using PEFT\nfrom peft import LoraConfig, get_peft_model\nlora_config = LoraConfig(\n    r=8,\n    lora_alpha=32,\n    lora_dropout=0.05,\n    bias=\"none\",\n    task_type=\"CAUSAL_LM\"\n)\nmodel = get_peft_model(model, lora_config)"],
+        "position": {"x": 200, "y": -100}
+      },
+      {
+        "id": "slm-4",
+        "parentId": "slm-3",
+        "title": "Advanced PEFT Methods",
+        "description": "Deeper dive into more recent PEFT techniques like AdaLoRA, IA3, and their applications.",
+        "topics": ["AdaLoRA", "IA3", "Prefix Tuning", "P-Tuning"],
+        "questions": ["How does AdaLoRA improve upon LoRA?", "What are the benefits of using prefix tuning for SLMs?"],
+        "resources": [{"title": "Research Paper: AdaLoRA", "url": "https://arxiv.org/abs/2305.14314"}],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": 400, "y": 0}
+      },
+      {
+        "id": "slm-5",
+        "parentId": "slm-1",
+        "title": "Evaluation Metrics for SLMs",
+        "description": "Focus on appropriate evaluation metrics beyond standard LLM metrics (perplexity, BLEU).  Emphasis on domain-specific metrics.",
+        "topics": ["Domain-Specific Metrics", "Human Evaluation", "Adversarial Testing", "Bias Detection"],
+        "questions": ["Why are standard LLM metrics often insufficient for evaluating SLMs?", "Describe a method for detecting bias in an SLM."],
+        "resources": [{"title": "Evaluating Language Model Performance", "url": "https://www.assemblyai.com/blog/evaluating-language-model-performance/"}],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": -200, "y": 100}
+      },
+      {
+        "id": "slm-6",
+        "parentId": "slm-5",
+        "title": "Robustness and Generalization",
+        "description": "Techniques to improve the robustness and generalization capabilities of SLMs to unseen data within the target domain.",
+        "topics": ["Out-of-Distribution Detection", "Calibration", "Ensemble Methods"],
+        "questions": ["How can you assess the robustness of an SLM to noisy input?", "What is model calibration and why is it important?"],
+        "resources": [],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": -400, "y": 0}
+      },
+      {
+        "id": "slm-7",
+        "parentId": "slm-1",
+        "title": "SLMs for Specific Domains: Biomedical",
+        "description": "Case study of SLMs in the biomedical domain, including applications like drug discovery, medical diagnosis, and literature review.",
+        "topics": ["BioBERT", "PubMedBERT", "Clinical NLP", "Knowledge Graph Integration"],
+        "questions": ["What are the unique challenges of applying SLMs to the biomedical domain?", "How can knowledge graphs enhance the performance of biomedical SLMs?"],
+        "resources": [{"title": "BioBERT Paper", "url": "https://aclanthology.org/D19-1406/"}],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": 0, "y": 200}
+      },
+      {
+        "id": "slm-8",
+        "parentId": "slm-1",
+        "title": "SLMs for Specific Domains: Finance",
+        "description": "Case study of SLMs in the finance domain, including applications like sentiment analysis of financial news, fraud detection, and risk assessment.",
+        "topics": ["Financial Sentiment Analysis", "Algorithmic Trading", "Risk Management", "Regulatory Compliance"],
+        "questions": ["What are the ethical considerations when using SLMs in finance?", "How can SLMs be used to improve fraud detection?"],
+        "resources": [],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": 0, "y": -200}
+      },
+      {
+        "id": "slm-9",
+        "parentId": "slm-1",
+        "title": "Deployment and Monitoring of SLMs",
+        "description": "Practical considerations for deploying SLMs in production, including infrastructure, scaling, and monitoring performance.",
+        "topics": ["Model Serving", "API Design", "Monitoring Metrics", "Continuous Integration/Continuous Deployment (CI/CD)"],
+        "questions": ["What are the key considerations when choosing a model serving framework?", "How can you monitor the performance of an SLM in production?"],
+        "resources": [{"title": "TensorFlow Serving", "url": "https://www.tensorflow.org/tfx/guide/serving"}],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": 200, "y": 200}
+      },
+      {
+        "id": "slm-10",
+        "parentId": "slm-1",
+        "title": "Future Trends in SLMs",
+        "description": "Discussion of emerging trends and research directions in the field of specialized language models.",
+        "topics": ["Multimodal SLMs", "Reinforcement Learning for SLMs", "Explainable SLMs", "Federated Learning for SLMs"],
+        "questions": ["What are the potential benefits of combining SLMs with other modalities (e.g., images, audio)?", "How can reinforcement learning be used to improve the performance of SLMs?"],
+        "resources": [],
+        "equations": [],
+        "codeExamples": [],
+        "position": {"x": 200, "y": -200}
+      }
+    ],
+    "edges": [
+      {"id": "edge-1", "source": "slm-1", "target": "slm-2", "label": "requires", "animated": false},
+      {"id": "edge-2", "source": "slm-1", "target": "slm-3", "label": "requires", "animated": false},
+      {"id": "edge-3", "source": "slm-3", "target": "slm-4", "label": "expands on", "animated": false},
+      {"id": "edge-4", "source": "slm-1", "target": "slm-5", "label": "requires", "animated": false},
+      {"id": "edge-5", "source": "slm-5", "target": "slm-6", "label": "expands on", "animated": false},
+      {"id": "edge-6", "source": "slm-1", "target": "slm-7", "label": "case study", "animated": false},
+      {"id": "edge-7", "source": "slm-1", "target": "slm-8", "label": "case study", "animated": false},
+      {"id": "edge-8", "source": "slm-1", "target": "slm-9", "label": "requires", "animated": false},
+      {"id": "edge-9", "source": "slm-1", "target": "slm-10", "label": "future outlook", "animated": false}
+    ]
+  }

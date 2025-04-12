@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, json, timestamp } from "drizzle-orm/pg-
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+
 // Learning Pathway schema
 export const pathways = pgTable("pathways", {
   id: serial("id").primaryKey(),

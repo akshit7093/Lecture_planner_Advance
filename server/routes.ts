@@ -13,6 +13,12 @@ import {
 } from "@shared/schema";
 import config from "./config";
 
+
+import json_resp from "./response.json";
+console.log("response", json_resp)
+
+
+
 // Helper function to sanitize specific fields in node data for JSON
 function sanitizeNodeData(node: any): any {
   if (!node) return node;
@@ -302,6 +308,7 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
     }
     
     // Step 4: Call the API
+    
     const response = await axios.post(OPENROUTER_BASE_URL, {
       model: MODEL_NAME,
       messages: [
@@ -318,6 +325,10 @@ Ensure there are at least 5-10 nodes with various content types appropriate for 
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`
       }
     });
+
+    // const response = ''
+    // const response=json_resp
+
     
     const duration = Date.now() - start;
     console.log(`Successfully used model: ${MODEL_NAME}`, {
